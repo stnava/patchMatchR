@@ -5,8 +5,8 @@
 \title{patch match two images}
 \usage{
 patchMatch(movingImage, fixedImage, fixedImageMask,
-  finalTransform = "Rigid", fixedPatchRadius = 31, visualize = FALSE,
-  verbose = FALSE)
+  finalTransform = "Rigid", fixedPatchRadius = 31, initialMap,
+  visualize = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are
@@ -16,9 +16,12 @@ transformed to the space of the fixed image}
 
 \item{fixedImageMask}{defines the object of interest in the fixedImage}
 
-\item{finalTransform}{defaults to "Rigid" but can be any antsRegistration}
+\item{finalTransform}{defaults to "Rigid" but can be any \code{antsRegistration}.}
 
 \item{fixedPatchRadius}{integer greater than zero.}
+
+\item{initialMap}{this is the output of a call to \code{antsRegistration}.
+if it is not present, a quick SyN map will be computed.}
 
 \item{visualize}{boolean, will plot to screen}
 

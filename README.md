@@ -30,9 +30,26 @@ img2 <- ri( 2 )%>% resampleImage( 2 ) %>% iMath( "Normalize" )
 mask = randomMask( getMask( img ), 10 )
 match = patchMatch( img2, img, mask, visualize=T, verbose=T )
 myMatches = matchedPatches( img2, img, match, verbose = TRUE )
-plot( myMatches[[1]][[4]] )
-plot( myMatches[[2]][[4]] )
+plot( myMatches[[1]][[4]] * 100 )
+plot( myMatches[[2]][[4]] * 100 )
 ```
+
+2D with pre-existing mapping
+
+```
+library( ANTsR )
+library( patchMatchR )
+img <- ri( 1 )  %>% iMath( "Normalize" )
+img2 <- ri( 2 )%>% resampleImage( 2 ) %>% iMath( "Normalize" )
+ireg = antsRegistration( img, img2, "SyNCC" )
+mask = randomMask( getMask( img ), 10 )
+match = patchMatch( img2, img, mask, visualize=T, verbose=T,
+  initialMap = ireg )
+myMatches = matchedPatches( img2, img, match, verbose = TRUE )
+plot( myMatches[[1]][[4]] * 100 )
+plot( myMatches[[2]][[4]] * 100 )
+```
+
 
 
 3D
@@ -40,11 +57,11 @@ plot( myMatches[[2]][[4]] )
 ```
 library( ANTsR )
 library( patchMatchR )
-img <- antsImageRead( getANTsRData( "ch2" ) ) %>% resampleImage( 2 ) %>%
+img <- antsImageRead( getANTsRData( "ch2" ) ) %>% resampleImage( 1 ) %>%
   iMath( "Normalize" )
-img2 <- resampleImage( img, 4 ) %>% iMath( "Normalize" )
+img2 <- resampleImage( img, 2 ) %>% iMath( "Normalize" )
 mask = randomMask( getMask( img ), 25 )
-myr = 9
+myr = 15
 match = patchMatch( img2, img, mask, visualize=T, verbose=T,
   fixedPatchRadius = myr )
 myMatches = matchedPatches( img2, img, match, verbose = TRUE,

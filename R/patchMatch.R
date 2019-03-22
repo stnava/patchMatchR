@@ -8,8 +8,10 @@
 #' transformed to the space of the fixed image
 #' @param fixedImage input image that provides the fixed reference domain.
 #' @param fixedImageMask defines the object of interest in the fixedImage
-#' @param finalTransform defaults to "Rigid" but can be any antsRegistration
+#' @param finalTransform defaults to "Rigid" but can be any \code{antsRegistration}.
 #' @param fixedPatchRadius integer greater than zero.
+#' @param initialMap this is the output of a call to \code{antsRegistration}.
+#' if it is not present, a quick SyN map will be computed.
 #' @param visualize boolean, will plot to screen
 #' @param verbose boolean, will print to screen
 #' @return data frame of corresponding points
@@ -33,6 +35,7 @@ patchMatch <- function(
   fixedImageMask,
   finalTransform = 'Rigid',
   fixedPatchRadius = 31,
+  initialMap,
   visualize = FALSE,
   verbose = FALSE ) {
 
@@ -47,16 +50,19 @@ patchMatch <- function(
     rep( 0, fixedImage@dimension ),
     boundary.condition = "image", spatial.info = TRUE,
     physical.coordinates = FALSE, get.gradient = FALSE)
-  if ( verbose ) print("Begin SyNning")
-  i1reg = antsRegistration(  fixedImage, movingImage, 'SyN', verbose=FALSE,
+  if ( missing( initialMap ) ) {
+    if ( verbose ) print("Begin SyNning")
+    initialMap = antsRegistration(
+      fixedImage, movingImage, 'SyN', verbose=FALSE,
         gradStep = 0.1, regIterations = c(40, 20, 0 ), synSampling=2,
         totalSigma=3, flowSigma=6, synMetric='CC' )
-  if ( verbose ) print("Confess!")
+    if ( verbose ) print( "Confess!" )
+    }
 
-  i1r = i1reg$warpedmovout
+  i1r = initialMap$warpedmovout
   if ( verbose ) print("map points")
   mapPts = antsApplyTransformsToPoints( fixedImage@dimension,
-      intmat0$indices, transformlist = i1reg$fwdtransforms  )
+      intmat0$indices, transformlist = initialMap$fwdtransforms  )
 
   txtype = "Euler2DTransform"
   if ( fixedImage@dimension == 3 )
