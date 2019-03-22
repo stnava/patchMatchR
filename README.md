@@ -9,6 +9,13 @@ very basic patch matching functionality based on ANTsR
 devtools::install_github( "stnava/patchMatchR")
 ```
 
+or if you have ANTsR etc installed then clone the repo and do:
+
+```
+cd patchMatchR
+R CMD INSTALL .
+```
+
 ### getting started
 
 in `R`
