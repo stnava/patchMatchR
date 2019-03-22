@@ -169,12 +169,6 @@ patchMatch <- function(
             plot(i1patch*10000,doCropping=F)
             print( paste( k, mymi, mymiB,
               outdf[ k, "SSIM" ], outdf[ k, "PSNR" ] ) )
-            print( "IND1" )
-            print( mapInd )
-            print( "IND2" )
-            print( mapInd2 )
-            print("Saved")
-            print( outdf[ k, inidminds ] )
             Sys.sleep( verbose )
             }
           }
