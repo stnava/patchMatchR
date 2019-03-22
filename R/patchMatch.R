@@ -74,7 +74,7 @@ patchMatch <- function(
     spatialFixed = intmat0$indices,
     indicesMoving = intmat0ind$indices,
     spatialMoving = intmat0$indices,
-    PSNR=nna, SSIM=nna, MI=nna )
+    MSE = nna, PSNR=nna, SSIM=nna, MI=nna )
   spatminds = grep( "spatialMoving", colnames( outdf ) )
   inidminds = grep( "indicesMoving", colnames( outdf ) )
   didviz = 0
@@ -146,6 +146,7 @@ patchMatch <- function(
           center = centerOfMassTemplate,
           translation = centerOfMassImage - centerOfMassTemplate )
           #  i1rpatchB = applyAntsrTransformToImage( xfrm, i1patchB, i0patch )
+          outdf[ k, "MSE" ] = MSE( i0patch, i1rpatch  )
           mypsn = PSNR( i0patch, i1rpatch  )
           myssm = SSIM( i0patch, i1rpatch  )
           mymi = antsImageMutualInformation( i0patch, i1rpatch )
