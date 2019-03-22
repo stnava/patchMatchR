@@ -5,7 +5,8 @@
 \title{patch match two images}
 \usage{
 patchMatch(movingImage, fixedImage, fixedImageMask,
-  finalTransform = "Rigid", visualize = FALSE, verbose = FALSE)
+  finalTransform = "Rigid", fixedPatchRadius = 31, visualize = FALSE,
+  verbose = FALSE)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are
@@ -16,6 +17,8 @@ transformed to the space of the fixed image}
 \item{fixedImageMask}{defines the object of interest in the fixedImage}
 
 \item{finalTransform}{defaults to "Rigid" but can be any antsRegistration}
+
+\item{fixedPatchRadius}{integer greater than zero.}
 
 \item{visualize}{boolean, will plot to screen}
 
@@ -35,7 +38,7 @@ library(ANTsR)
 img <- ri( 1 ) \%>\% iMath( "Normalize" )
 img2 <- ri( 2 ) \%>\% iMath( "Normalize" )
 mask = randomMask( getMask( img ), 2 )
-match = patchMatch( img2, img, mask )
+match = patchMatch( img2, img, mask, fixedPatchRadius = 3 )
 
 }
 \author{

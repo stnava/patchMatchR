@@ -9,6 +9,7 @@
 #' @param fixedImage input image that provides the fixed reference domain.
 #' @param fixedImageMask defines the object of interest in the fixedImage
 #' @param finalTransform defaults to "Rigid" but can be any antsRegistration
+#' @param fixedPatchRadius integer greater than zero.
 #' @param visualize boolean, will plot to screen
 #' @param verbose boolean, will print to screen
 #' @return data frame of corresponding points
@@ -19,7 +20,7 @@
 #' img <- ri( 1 ) %>% iMath( "Normalize" )
 #' img2 <- ri( 2 ) %>% iMath( "Normalize" )
 #' mask = randomMask( getMask( img ), 2 )
-#' match = patchMatch( img2, img, mask )
+#' match = patchMatch( img2, img, mask, fixedPatchRadius = 3 )
 #'
 #' @export patchMatch
 #' @importFrom graphics plot rasterImage rect plot.new text layout
@@ -31,6 +32,7 @@ patchMatch <- function(
   fixedImage,
   fixedImageMask,
   finalTransform = 'Rigid',
+  fixedPatchRadius = 31,
   visualize = FALSE,
   verbose = FALSE ) {
 
@@ -58,7 +60,7 @@ patchMatch <- function(
   if ( fixedImage@dimension == 3 )
     txtype = "Euler3DTransform"
 
-  off = rep( 31, fixedImage@dimension )
+  off = rep( fixedPatchRadius, fixedImage@dimension )
   scl = antsGetSpacing( movingImage )/antsGetSpacing( fixedImage )
   searchOff = max( round( scl ) )
   off2 = round( off / scl ) - 1
@@ -285,8 +287,8 @@ SSIM <- function( x, y, K = c( 0.01, 0.03 ) )
 #' img <- ri( 1 ) %>% iMath( "Normalize" )
 #' img2 <- ri( 2 ) %>% iMath( "Normalize" )
 #' mask = randomMask( getMask( img ), 2 )
-#' match = patchMatch( img2, img, mask )
-#' myMatches = matchedPatches( img2, img, match )
+#' match = patchMatch( img2, img, mask, fixedPatchRadius = 3 )
+#' myMatches = matchedPatches( img2, img, match, fixedPatchRadius = 3 )
 #'
 #' @export
 matchedPatches <- function(

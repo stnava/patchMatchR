@@ -31,8 +31,8 @@ library(ANTsR)
 img <- ri( 1 ) \%>\% iMath( "Normalize" )
 img2 <- ri( 2 ) \%>\% iMath( "Normalize" )
 mask = randomMask( getMask( img ), 2 )
-match = patchMatch( img2, img, mask )
-myMatches = matchedPatches( img2, img, match )
+match = patchMatch( img2, img, mask, fixedPatchRadius = 3 )
+myMatches = matchedPatches( img2, img, match, fixedPatchRadius = 3 )
 
 }
 \author{
