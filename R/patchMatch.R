@@ -153,7 +153,7 @@ patchMatch <- function(
           outdf[ k, "PSNR" ] = mypsnB
           outdf[ k, "SSIM" ] = myssmB
           outdf[ k, "MI" ] = mymiB
-          if ( myssmB > myssm & myssmB > 0.3  & visualize ) {
+          if ( visualize ) {
             plot(i0patch*10000,doCropping=F)
             plot(i1rpatchB*10000,doCropping=F)
             plot(i1patch*10000,doCropping=F)
