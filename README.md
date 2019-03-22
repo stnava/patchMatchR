@@ -40,10 +40,11 @@ plot( myMatches[[2]][[4]] )
 ```
 library( ANTsR )
 library( patchMatchR )
-img <- antsImageRead( getANTsRData( "ch2" ) ) %>% resampleImage( 2 )
+img <- antsImageRead( getANTsRData( "ch2" ) ) %>% resampleImage( 2 ) %>%
+  iMath( "Normalize" )
 img2 <- resampleImage( img, 4 ) %>% iMath( "Normalize" )
 mask = randomMask( getMask( img ), 25 )
-myr = 5
+myr = 9
 match = patchMatch( img2, img, mask, visualize=T, verbose=T,
   fixedPatchRadius = myr )
 myMatches = matchedPatches( img2, img, match, verbose = TRUE,

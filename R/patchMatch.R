@@ -195,10 +195,12 @@ patchMatch <- function(
 #' @export
 MSE <- function( x, y = NULL )
 {
+  x = x / max( x )
   if( is.null( y ) )
     {
     return( mean( x^2 ) )
     } else {
+    y = y / max( y )
     return( mean ( ( x - y )^2 ) )
     }
 }
@@ -221,6 +223,8 @@ MSE <- function( x, y = NULL )
 #' @export
 PSNR <- function( x, y )
 {
+  x = x / max( x )
+  y = y / max( y )
   return( 20 * log10( max( x ) ) - 10 * log10( MSE( x, y ) ) )
 }
 
@@ -250,6 +254,8 @@ PSNR <- function( x, y )
 #' @export
 SSIM <- function( x, y, K = c( 0.01, 0.03 ) )
 {
+  x = x / max( x )
+  y = y / max( y )
   globalMax <- max( max( x ), max( y ) )
   globalMin <- abs( min( min( x ), min( y ) ) )
   L <- globalMax - globalMin
