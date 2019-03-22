@@ -34,7 +34,7 @@ This prioritizes usability at the cost of optimality.
 library(ANTsR)
 img <- ri( 1 ) \%>\% iMath( "Normalize" )
 img2 <- ri( 2 ) \%>\% iMath( "Normalize" )
-mask = randomMask( getMask( img ), 3 )
+mask = randomMask( getMask( img ), 2 )
 match = patchMatch( img2, img, mask )
 
 }

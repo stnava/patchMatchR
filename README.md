@@ -1,6 +1,8 @@
 # patchMatchR
 very basic patch matching functionality based on ANTsR
 
+[![Build Status](https://travis-ci.org/stnava/patchMatchR.png?branch=master)](https://travis-ci.org/stnava/patchMatchR)
+
 ### installation
 
 ```

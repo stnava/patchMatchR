@@ -3,6 +3,7 @@
 export(MSE)
 export(PSNR)
 export(SSIM)
+export(matchedPatches)
 export(patchMatch)
 importFrom(ANTsR,getCenterOfMass)
 importFrom(ANTsRCore,antsApplyTransforms)

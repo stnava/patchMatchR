@@ -18,7 +18,7 @@
 #' library(ANTsR)
 #' img <- ri( 1 ) %>% iMath( "Normalize" )
 #' img2 <- ri( 2 ) %>% iMath( "Normalize" )
-#' mask = randomMask( getMask( img ), 3 )
+#' mask = randomMask( getMask( img ), 2 )
 #' match = patchMatch( img2, img, mask )
 #'
 #' @export patchMatch
@@ -264,4 +264,84 @@ SSIM <- function( x, y, K = c( 0.01, 0.03 ) )
   SSI <- numerator / denominator
 
   return( SSI )
+}
+
+
+#' extract matched patches between two images
+#'
+#' provides the matched patches given output of \code{patchMatch}
+#'
+#' @param movingImage input image from which we extract patches that are
+#' transformed to the space of the fixed image
+#' @param fixedImage input image that provides the fixed reference domain.
+#' @param patchMatchOutput the data frame output from \code{patchMatch}.
+#' @param fixedPatchRadius integer greater than zero.
+#' @param verbose boolean, will print to screen.
+#' @return lists of corresponding patches
+#' @author Avants BB
+#' @examples
+#'
+#' library(ANTsR)
+#' img <- ri( 1 ) %>% iMath( "Normalize" )
+#' img2 <- ri( 2 ) %>% iMath( "Normalize" )
+#' mask = randomMask( getMask( img ), 2 )
+#' match = patchMatch( img2, img, mask )
+#' myMatches = matchedPatches( img2, img, match )
+#'
+#' @export
+matchedPatches <- function(
+  movingImage,
+  fixedImage,
+  patchMatchOutput,
+  fixedPatchRadius = 31,
+  verbose = FALSE )
+{
+  off = rep( fixedPatchRadius, fixedImage@dimension )
+  scl = antsGetSpacing( movingImage )/antsGetSpacing( fixedImage )
+  searchOff = max( round( scl ) )
+  off2 = round( off / scl ) - 1
+  cnms = colnames( patchMatchOutput )
+  spatfinds = grep( "spatialFixed", cnms )
+  inidfinds = grep( "indicesFixed", cnms )
+  spatminds = grep( "spatialMoving", cnms )
+  inidminds = grep( "indicesMoving", cnms )
+
+  if ( verbose ) {
+    print( paste( "Search Offset:", searchOff ) )
+    print( paste( "Scale Difference:", paste0(scl, collapse='x' ) ) )
+    }
+
+  fixPatchList = list()
+  movPatchList = list()
+  didviz = 0
+  for ( k in (1:nrow( patchMatchOutput ) ) ) {
+    if ( ! is.na( patchMatchOutput$PSNR[k]  ) )
+      {
+      locind = as.numeric( patchMatchOutput[k,inidfinds] )
+      indlo = locind - off
+      indhi = locind + off + 1
+      idim = dim( fixedImage )
+      if ( all( indlo > 0 ) & all( indhi <= idim )  ) {
+        i0patch = cropIndices( fixedImage, indlo, indhi )
+        if ( verbose & didviz == 0 ) {
+          print( paste( "fixPatch",paste0( dim( i0patch ), collapse='x' ) ) )
+          didviz = 1
+          }
+        fixPatchList[[k]] = i0patch
+        } else fixPatchList[[k]] = NA
+      mapInd = as.numeric( patchMatchOutput[k,inidminds] )
+      indlo = round( mapInd ) - off2
+      indhi = round( mapInd ) + off2 + 1
+      idim = dim( movingImage )
+      if ( all( indlo > 0 ) & all( indhi <= idim )  ) {
+        i1patch = cropIndices( movingImage, indlo, indhi )
+        if ( verbose & didviz == 1 ) {
+          print( paste( "movPatch",paste0( dim( i1patch ), collapse='x' ) ) )
+          didviz = 2
+          }
+        movPatchList[[k]] = i1patch
+      } else movPatchList[[k]] = NA
+    }
+  }
+  return( list( fixPatchList = fixPatchList, movPatchList = movPatchList ) )
 }
