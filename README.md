@@ -20,6 +20,8 @@ R CMD INSTALL .
 
 in `R`
 
+2D
+
 ```
 library( ANTsR )
 library( patchMatchR )
@@ -33,3 +35,19 @@ plot( myMatches[[2]][[4]] )
 ```
 
 
+3D
+
+```
+library( ANTsR )
+library( patchMatchR )
+myr = 7
+img <- antsImageRead( getANTsRData( "ch2" ) ) %>% resampleImage( 2 )
+img2 <- resampleImage( img, 4 ) %>% iMath( "Normalize" )
+mask = randomMask( getMask( img ), 10 )
+match = patchMatch( img2, img, mask, visualize=T, verbose=T,
+  fixedPatchRadius = myr )
+myMatches = matchedPatches( img2, img, match, verbose = TRUE,
+  fixedPatchRadius = myr+1  )
+plot( myMatches[[1]][[4]] )
+plot( myMatches[[2]][[4]] )
+```

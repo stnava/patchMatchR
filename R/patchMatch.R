@@ -47,21 +47,25 @@ patchMatch <- function(
     rep( 0, fixedImage@dimension ),
     boundary.condition = "image", spatial.info = TRUE,
     physical.coordinates = FALSE, get.gradient = FALSE)
-
-  i1reg = antsRegistration(  fixedImage, movingImage, 'SyN', verbose=F,
+  if ( verbose ) print("Begin SyNning")
+  i1reg = antsRegistration(  fixedImage, movingImage, 'SyN', verbose=FALSE,
         gradStep = 0.1, regIterations = c(40, 20, 0 ), synSampling=2,
         totalSigma=3, flowSigma=6, synMetric='CC' )
+  if ( verbose ) print("Confess!")
 
   i1r = i1reg$warpedmovout
+  if ( verbose ) print("map points")
   mapPts = antsApplyTransformsToPoints( fixedImage@dimension,
       intmat0$indices, transformlist = i1reg$fwdtransforms  )
 
   txtype = "Euler2DTransform"
   if ( fixedImage@dimension == 3 )
-    txtype = "Euler3DTransform"
+    txtype = "AffineTransform"
+
+  if ( verbose ) print( paste( "txtype =", txtype ) )
 
   off = rep( fixedPatchRadius, fixedImage@dimension )
-  scl = antsGetSpacing( movingImage )/antsGetSpacing( fixedImage )
+  scl = antsGetSpacing( movingImage ) / antsGetSpacing( fixedImage )
   searchOff = max( round( scl ) )
   off2 = round( off / scl ) - 1
   if ( verbose ) {
@@ -78,8 +82,9 @@ patchMatch <- function(
   spatminds = grep( "spatialMoving", colnames( outdf ) )
   inidminds = grep( "indicesMoving", colnames( outdf ) )
   didviz = 0
+  if ( verbose ) print("Begin point-wise optimization")
   for ( k in (1:nrow( intmat0$indices )) ) {
-    locind = intmat0ind$indices[k,]
+    locind = as.numeric( intmat0ind$indices[k,] )
     indlo = locind - off
     indhi = locind + off + 1
     idim = dim( fixedImage )
@@ -89,8 +94,8 @@ patchMatch <- function(
         print( paste( "fixPatch",paste0( dim( i0patch ), collapse='x' ) ) )
         didviz = 1
         }
-      mapInd = antsTransformPhysicalPointToIndex(
-        movingImage,as.numeric(mapPts[k,]))
+      mapInd = as.numeric( antsTransformPhysicalPointToIndex(
+        movingImage,as.numeric(mapPts[k,])) )
       indlo = round( mapInd ) - off2*searchOff
       indhi = round( mapInd ) + off2*searchOff + 1
       if ( all( indlo > 0 ) & all( indhi <= dim(movingImage) )  ) {
@@ -109,7 +114,7 @@ patchMatch <- function(
       mov = iMath( i1patch, "Normalize" )
       trans=antsRegistration(
         fix,
-        mov, 'Translation',initialTransform=xfrm,
+        mov, 'Translation', initialTransform=xfrm,
         affMetric = 'Mattes',
         affSampling = 20, affIterations = c( 50, 20, 20  ) )
       rigid=antsRegistration(
@@ -145,23 +150,23 @@ patchMatch <- function(
         xfrm <- createAntsrTransform( type = txtype,
           center = centerOfMassTemplate,
           translation = centerOfMassImage - centerOfMassTemplate )
-          #  i1rpatchB = applyAntsrTransformToImage( xfrm, i1patchB, i0patch )
-          outdf[ k, "MSE" ] = MSE( i0patch, i1rpatch  )
-          mypsn = PSNR( i0patch, i1rpatch  )
-          myssm = SSIM( i0patch, i1rpatch  )
-          mymi = antsImageMutualInformation( i0patch, i1rpatch )
-          mypsnB = PSNR( i0patch, i1rpatchB  )
-          myssmB = SSIM( i0patch, i1rpatchB  )
-          mymiB = antsImageMutualInformation( i0patch, i1rpatchB )
-          outdf[ k, "PSNR" ] = mypsnB
-          outdf[ k, "SSIM" ] = myssmB
-          outdf[ k, "MI" ] = mymiB
-          if ( visualize ) {
+        i1rpatchB = applyAntsrTransformToImage( xfrm, i1patchB, i0patch )
+        outdf[ k, "MSE" ] = MSE( i0patch, i1rpatch  )
+        mypsn = PSNR( i0patch, i1rpatch  )
+        myssm = SSIM( i0patch, i1rpatch  )
+        mymi = antsImageMutualInformation( i0patch, i1rpatch )
+        mypsnB = PSNR( i0patch, i1rpatchB  )
+        myssmB = SSIM( i0patch, i1rpatchB  )
+        mymiB = antsImageMutualInformation( i0patch, i1rpatchB )
+        outdf[ k, "PSNR" ] = mypsnB
+        outdf[ k, "SSIM" ] = myssmB
+        outdf[ k, "MI" ] = mymiB
+        if ( visualize ) {
             plot(i0patch*10000,doCropping=F)
             plot(i1rpatchB*10000,doCropping=F)
             plot(i1patch*10000,doCropping=F)
             print( paste( k, mymi, mymiB, myssm , myssmB ) )
-            Sys.sleep( 3 )
+            Sys.sleep( verbose )
             }
           }
         }}
