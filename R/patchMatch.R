@@ -96,6 +96,8 @@ patchMatch <- function(
         }
       mapInd = as.numeric( antsTransformPhysicalPointToIndex(
         movingImage,as.numeric(mapPts[k,])) )
+      outdf[k, spatminds ] = as.numeric(mapPts[k,])
+      outdf[k, inidminds ] = mapInd
       indlo = round( mapInd ) - off2*searchOff
       indhi = round( mapInd ) + off2*searchOff + 1
       if ( all( indlo > 0 ) & all( indhi <= dim(movingImage) )  ) {
@@ -131,41 +133,48 @@ patchMatch <- function(
           affSampling = 32, affIterations = c( 11, 5 ) )
       i1rpatchB = antsApplyTransforms( fix, mov, i1rpatchBreg$fwdtransforms,
         interpolator = "bSpline" )
-      mypt = antsApplyTransformsToPoints( fixedImage@dimension,
+      mypt2 = antsApplyTransformsToPoints( fixedImage@dimension,
             matrix(centerOfMassTemplate, ncol=fixedImage@dimension),
             transformlist = i1rpatchBreg$fwdtransforms  )
-      outdf[k, spatminds ] = mypt
-      mapInd = antsTransformPhysicalPointToIndex( movingImage, as.numeric(mypt))
-      outdf[k, inidminds ] = mapInd
+      mapInd2 = antsTransformPhysicalPointToIndex( movingImage,
+        as.numeric( mypt2 ) )
       indlo = round( mapInd ) - off2
       indhi = round( mapInd ) + off2 + 1
       idim = dim( movingImage )
       if ( all( indlo > 0 ) & all( indhi <= idim )  ) {
         i1patchB = cropIndices( movingImage, indlo, indhi )
         if ( verbose & didviz == 2 ) {
-          print( paste( "movPatchFinal",paste0( dim( i1patchB ), collapse='x' ) ) )
+          print( paste( "movPatchFinal",
+            paste0( dim( i1patchB ), collapse='x' ) ) )
           didviz = 3
           }
-        centerOfMassImage <- getCenterOfMass( i1patchB * 0 + 1 )
-        xfrm <- createAntsrTransform( type = txtype,
-          center = centerOfMassTemplate,
-          translation = centerOfMassImage - centerOfMassTemplate )
-        i1rpatchB = applyAntsrTransformToImage( xfrm, i1patchB, i0patch )
-        outdf[ k, "MSE" ] = MSE( i0patch, i1rpatch  )
-        mypsn = PSNR( i0patch, i1rpatch  )
-        myssm = SSIM( i0patch, i1rpatch  )
         mymi = antsImageMutualInformation( i0patch, i1rpatch )
-        mypsnB = PSNR( i0patch, i1rpatchB  )
-        myssmB = SSIM( i0patch, i1rpatchB  )
         mymiB = antsImageMutualInformation( i0patch, i1rpatchB )
-        outdf[ k, "PSNR" ] = mypsnB
-        outdf[ k, "SSIM" ] = myssmB
-        outdf[ k, "MI" ] = mymiB
+        if ( mymiB < mymi ) {
+          outdf[ k, spatminds ] = mypt2
+          outdf[ k, inidminds ] = mapInd2
+          outdf[ k, "MI" ] = mymiB
+          outdf[ k, "MSE" ] = MSE( i0patch, i1rpatchB  )
+          outdf[ k, "PSNR" ] = PSNR( i0patch, i1rpatchB  )
+          outdf[ k, "SSIM" ] = SSIM( i0patch, i1rpatchB  )
+          } else {
+          outdf[ k, "MI" ] = mymi
+          outdf[ k, "MSE" ] = MSE( i0patch, i1rpatch  )
+          outdf[ k, "PSNR" ] = PSNR( i0patch, i1rpatch  )
+          outdf[ k, "SSIM" ] = SSIM( i0patch, i1rpatch  )
+          }
         if ( visualize ) {
             plot(i0patch*10000,doCropping=F)
             plot(i1rpatchB*10000,doCropping=F)
             plot(i1patch*10000,doCropping=F)
-            print( paste( k, mymi, mymiB, myssm , myssmB ) )
+            print( paste( k, mymi, mymiB,
+              outdf[ k, "SSIM" ], outdf[ k, "PSNR" ] ) )
+            print( "IND1" )
+            print( mapInd )
+            print( "IND2" )
+            print( mapInd2 )
+            print("Saved")
+            print( outdf[ k, inidminds ] )
             Sys.sleep( verbose )
             }
           }
