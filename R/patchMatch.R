@@ -154,8 +154,12 @@ patchMatch <- function(
             paste0( dim( i1patchB ), collapse='x' ) ) )
           didviz = 3
           }
+        if ( all( antsGetSpacing( i0patch ) > 0 ) &
+	     all( antsGetSpacing( i1rpatch ) > 0 ) &
+	     all( antsGetSpacing( i1rpatchB ) > 0 ) ) {
         mymi = antsImageMutualInformation( i0patch, i1rpatch )
         mymiB = antsImageMutualInformation( i0patch, i1rpatchB )
+	} else { mymiB = mymi = Inf }
         if ( mymiB < mymi ) {
           outdf[ k, spatminds ] = mypt2
           outdf[ k, inidminds ] = mapInd2
