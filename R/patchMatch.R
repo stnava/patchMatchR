@@ -179,6 +179,9 @@ patchMatch <- function(
             }
           }
         }}
+      if ( verbose & ( ( k %% 100 ) == 0 ) ) {
+        cat( paste0( k,'..' ) )
+        }
       }
   return( outdf )
 }
