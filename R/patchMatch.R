@@ -154,8 +154,8 @@ patchMatch <- function(
             paste0( dim( i1patchB ), collapse='x' ) ) )
           didviz = 3
           }
-        mymi = antsImageMutualInformation( i0patch, i1rpatch )
-        mymiB = antsImageMutualInformation( i0patch, i1rpatchB )
+        mymi = antsImageMutualInformation( i0patch, i1rpatch, sampling.percentage=0.8, nBins=16 )
+        mymiB = antsImageMutualInformation( i0patch, i1rpatchB, sampling.percentage=0.8, nBins=16 )
         if ( is.na( mymiB ) ) mymiB = Inf
 	if ( is.na( mymi ) ) mymi = Inf
 	if ( mymiB < mymi ) {
