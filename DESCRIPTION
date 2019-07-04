@@ -1,13 +1,18 @@
 Package: patchMatchR
 Type: Package
-Title: What the Package Does Using Title Case
+Title: Local patch matching with flexible transformation models in n-dimensional images.
 Version: 1.0
 Date: 2019-03-22
 Author: Brian B. Avants
 Maintainer: Brian B. Avants <stnava@gmail.com>
-Description: More details about what the package does. See
-        <http://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file>
-        for details on how to write this part.
+Description: Patch matching differs from models that are global and physical.
+  This packages focuses on mapping patches or blocks over an image.  The patchMatch
+  yields a local patch transformation and extracted patch without interpolating
+  the original images.  Thus, the matches are similar to bounding boxes.  Quality
+  information and spatial locations of matching points are also returned. Masks
+  define the points over which we match.  In general, this is targeted at finding
+  good sparse local matches between large domain images that may only partially
+  correspond.
 License: Apache License (>=2.0)
 Depends:
     R (>= 3.2), ANTsRCore, ANTsR
