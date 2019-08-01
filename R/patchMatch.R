@@ -573,10 +573,11 @@ deepFeatures <- function( x, mask, patchSize = 64,
     }
   features = predict( vggmodel, patches )
   vecdim = prod( dim( features )[-1]  )
-  if ( any( featureSubset > vecdim ) )
-    featureSubset = featureSubset[ featureSubset <= vecdim ]
+  if ( ! missing( featureSubset ) )
+    if ( any( featureSubset > vecdim ) )
+      featureSubset = featureSubset[ featureSubset <= vecdim ]
   features = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
-  if ( ! missing( "featureSubset" ) )
+  if ( ! missing( featureSubset ) )
     features = features[,featureSubset]
   return( list( features=features, patches=patches0, patchCoords = patchCoords ) )
 }
