@@ -563,9 +563,9 @@ deepFeatures <- function( x, mask, patchSize = 64,
       vgg3Dweights[[1]][ , , , j , ] = vgg2Dweights[[1]] / nchan
     for ( k in c( 2, 4, 6, 8 ) )
       vgg3Dweights[[k]] = vgg2Dweights[[k]]
-    for ( k in c( 5, 7 ) )
-      for ( j in 1:nchan )
-        vgg3Dweights[[k]][ , , j, , ] = vgg2Dweights[[k]] / nchan
+    for ( k in c( 3, 5, 7 ) )
+      for ( j in 1:idim )
+        vgg3Dweights[[k]][ , , j, , ] = vgg2Dweights[[k]] / idim
     set_weights( vggmodel, vgg3Dweights )
   }
 
