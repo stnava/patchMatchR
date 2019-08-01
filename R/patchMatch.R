@@ -26,7 +26,7 @@
 #'
 #' @export patchMatch
 #' @importFrom graphics plot rasterImage rect plot.new text layout
-#' @importFrom ANTsR getCenterOfMass
+#' @importFrom ANTsR getCenterOfMass sparseDistanceMatrixXY
 #' @importFrom ANTsRCore antsRegistration antsApplyTransforms applyAntsrTransformToImage antsApplyTransformsToPoints antsGetSpacing applyAntsrTransformToImage createAntsrTransform  cropIndices getNeighborhoodInMask iMath antsTransformPhysicalPointToIndex antsImageClone antsImageMutualInformation
 #' @importFrom ANTsRCore antsGetDirection antsGetOrigin resampleImage labelStats
 patchMatch <- function(
@@ -389,7 +389,6 @@ matchedPatches <- function(
 #' @param movingPatchSize integer greater than or equal to 32.
 #' @param fixedPatchSize integer greater than or equal to 32.
 #' @param knn k-nearest neighbors ( should be 1, for now )
-#' @param visualize boolean
 #' @return correspondence data
 #' @author Avants BB
 #' @examples
@@ -404,9 +403,44 @@ matchedPatches <- function(
 #' mask = randomMask( getMask( img ), nP1 )
 #' mask2 = randomMask( getMask( img2 ), nP2 )
 #' match = deepPatchMatch( img2, img, mask, mask2 )
+#' \dontrun{
+#' library( ANTsR )
+#' img <- ri( 1 ) %>% iMath( "Normalize" ) %>% resampleImage( c( 2, 2 ) )
+#' nP1 = 10
+#' nP2 = 40
+#' psz = 32
+#' mask = randomMask( getMask( img ), nP1 )
+#' features = deepFeatures( img, mask, patchSize = psz )
+#' img2 <- ri( 5 ) %>% iMath( "Normalize" ) %>% resampleImage( c( 2, 2 ) )
+#' txStretch = createAntsrTransform( "AffineTransform", dim=2 )
+#' params = getAntsrTransformParameters( txStretch )
+#' params[1] = 0.8
+#' setAntsrTransformParameters(txStretch, params)
+#' cos45 = cos(pi*45/180)
+#' sin45 = sin(pi*45/180)
+#' txRotate <- createAntsrTransform( precision="float", type="AffineTransform", dim=2 )
+#' setAntsrTransformParameters(txRotate, c(cos45,-sin45,sin45,cos45,0,0) )
+#' setAntsrTransformFixedParameters(txRotate, c(128,128))
+#' rotateFirst = composeAntsrTransforms(list(txStretch, txRotate))
+#' # img2 = applyAntsrTransform(rotateFirst, img2, img2)
+#' mask2 = randomMask( getMask( img2 ), nP2 )
+#' match = deepPatchMatch( img2, img, mask2, mask, 64, 64 )
+#'
+#' for ( k in 1:nrow( match$matches ) ) {
+#'   if ( ! is.na( match$matches[k,1] ) ) {
+#'     layout( matrix(1:2,nrow=1) )
+#'     plot( as.antsImage( match$ffeatures$patches[k,,] ) )
+#'     plot( as.antsImage( match$mfeatures$patches[match$matches[k,1],,] ) )
+#'     print( k )
+#'     print( match$ffeatures$patchCoords[k,] )
+#'     print( match$mfeatures$patchCoords[match$matches[k,1],] )
+#'     Sys.sleep(1)
+#'     }
+#' }
+#' }
 #'
 #' @export deepPatchMatch
-#' @importFrom ANTsRNet extractImagePatches
+#' @importFrom ANTsRNet extractImagePatches extractImagePatchCoordinates
 #' @importFrom qlcMatrix colMin
 #' @importFrom abind abind
 #' @importFrom keras application_vgg19 keras_model get_layer
@@ -416,16 +450,20 @@ deepPatchMatch <- function(
   movingImageMask,
   fixedImageMask,
   movingPatchSize = 32,
-  fixedPatchSize = 32, knn = 1, visualize = FALSE ) {
+  fixedPatchSize = 32, knn = 1 ) {
   ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize )
   mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize )
   mydist = sparseDistanceMatrixXY(
     t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
-  matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
-  costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
-  for ( k in 1:nrow(matches) ) {
-    matches[ k, ] = which( mydist[k,] > 0  )
-    costs[k, ] = mydist[k,  mydist[k,] > 0  ]
+  matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
+  costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
+  best1s = qlcMatrix::colMin( mydist, which = TRUE  )
+  for ( k in 1:ncol(best1s$which) ) {
+    ww = which( best1s$which[,k] )
+    if ( length( ww ) > 0 ) {
+      matches[ k, ] = ww
+      costs[k, ] = as.numeric( best1s$min[k] )
+    }
   }
   return(
     list(
@@ -471,7 +509,7 @@ deepPatchMatch <- function(
 #' @param strideLength Defines the sequential patch overlap for
 #' \code{maxNumberOfPatches = "all"}.  Can be a image-dimensional vector or a
 #' scalar.
-#' @return feature array
+#' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
 #'
@@ -502,11 +540,13 @@ deepFeatures <- function( x, mask, patchSize = 64 ) {
   x = iMath( x, "Normalize" ) * 255 - 127.5
   patches0 = extractImagePatches( x, patchSize, maskImage = mask,
     maxNumberOfPatches=sum(mask), returnAsArray = T, randomSeed = 1 )
+  patchCoords = extractImagePatchCoordinates( x, patchSize, maskImage = mask,
+    maxNumberOfPatches=sum(mask), physicalCoordinates = T, randomSeed = 1 )
   patches = patches0
   for( k in 2:3 )
      patches = abind( patches, patches0, along = idim+2)
   features = predict( vggmodel2D, patches )
   vecdim = prod( dim( features )[-1]  )
   features = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
-  return( list( features=features, patches=patches0 ) )
+  return( list( features=features, patches=patches0, patchCoords = patchCoords ) )
 }

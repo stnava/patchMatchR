@@ -18,7 +18,7 @@ deepFeatures(x, mask, patchSize = 64)
 scalar.}
 }
 \value{
-feature array
+feature array, patches and patch coordinates
 }
 \description{
 High-level function for extracting features based on a pretrained network.
