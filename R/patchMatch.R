@@ -519,10 +519,12 @@ deepFeatures <- function( x, mask, patchSize = 64,
   vggblocks = c( "block5_conv4", "block2_conv2" )
   if ( ! missing( block_name ) ) vggblocks[1] = block_name
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
+  vggp = patchSize
+  if ( any( patchSize < 32 ) ) vggp = rep( 32, idim )
   if ( idim == 2 ) {
     vgg19 = application_vgg19(
         include_top = FALSE, weights = "imagenet",
-        input_shape = c( patchSize, 3 ),
+        input_shape = c( vggp, 3 ),
         classes = 1000)
     vgg19$trainable = FALSE
     vggmodel <- keras_model( inputs = vgg19$input,
@@ -531,7 +533,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
   if ( idim == 3 ) {
     vgg19 = application_vgg19(
       include_top = FALSE, weights = "imagenet",
-      input_shape = c( patchSize[1], patchSize[2], 3 ),
+      input_shape = c( vggp[1], vggp[2], 3 ),
       classes = 1000)
     vgg19$trainable = FALSE
     vggmodel2D <- keras_model( inputs = vgg19$input,
