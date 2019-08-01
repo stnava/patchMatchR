@@ -521,6 +521,7 @@ deepPatchMatch <- function(
 #' @export deepFeatures
 deepFeatures <- function( x, mask, patchSize = 64 ) {
   idim = x@dimension
+  vggblocks = c( "block5_conv4", "block2_conv2" )
   if ( any( patchSize < 32 ) ) stop("Patch size must be at least 32x32")
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   if ( idim == 2 ) {
@@ -530,11 +531,37 @@ deepFeatures <- function( x, mask, patchSize = 64 ) {
         classes = 1000)
     vgg19$trainable = FALSE
     vggmodel2D <- keras_model( inputs = vgg19$input,
-        outputs = get_layer(vgg19, 'block5_conv4')$output)
+        outputs = get_layer(vgg19, vggblocks[1] )$output)
     }
 
   if ( idim == 3 ) {
-
+    vgg19 = application_vgg19(
+      include_top = FALSE, weights = "imagenet",
+      input_shape = c( patchSize, 3 ),
+      classes = 1000)
+    vgg19$trainable = FALSE
+    freeze_weights( vgg19 )
+    vggmodel2D <- keras_model( inputs = vgg19$input,
+      outputs = get_layer(vgg19, vggblocks[1] )$output)
+    ######################################################################################
+    nchan = 1
+    vggmodel = createVggModel3D( c( psz, psz, psz, nchan ), numberOfClassificationLabels = 1000,
+         layers = c(1, 2, 3, 4, 4), lowestResolution = 64,
+         convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
+         strides = c(2, 2, 2), denseUnits = 4096, dropoutRate = 0,
+         style = 19, mode = "classification")
+    vggmodel <- keras_model( inputs = vggmodel$input,
+      outputs = get_layer(vggmodel, index = 5 )$output)
+    vgg3Dweights = get_weights( vggmodel )
+    vgg2Dweights = get_weights( vggmodel2D )
+    for ( j in 1:nchan )
+      vgg3Dweights[[1]][ , , , j , ] = vgg2Dweights[[1]]
+    for ( k in c( 2, 4, 6, 8 ) )
+      vgg3Dweights[[k]] = vgg2Dweights[[k]]
+    for ( k in c( 5, 7 ) )
+      for ( j in 1:nchan )
+        vgg3Dweights[[k]][ , , j, , ] = vgg2Dweights[[k]]
+    set_weights( vggmodel, vgg3Dweights )
     }
 
   x = iMath( x, "Normalize" ) * 255 - 127.5
