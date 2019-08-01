@@ -488,6 +488,7 @@ deepPatchMatch <- function(
 #' @param x input input image
 #' @param mask defines the object of interest in the fixedImage
 #' @param patchSize vector or scalar defining patch dimensions
+#' @param block_name name of vgg feature block (optional)
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
@@ -498,9 +499,10 @@ deepPatchMatch <- function(
 #' features = deepFeatures( img, mask, patchSize = 32 )
 #'
 #' @export deepFeatures
-deepFeatures <- function( x, mask, patchSize = 64 ) {
+deepFeatures <- function( x, mask, patchSize = 64, block_name ) {
   idim = x@dimension
   vggblocks = c( "block5_conv4", "block2_conv2" )
+  if ( ! missing( block_name ) ) vggblocks[1] = block_name
   if ( any( patchSize < 32 ) ) stop("Patch size must be at least 32x32")
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   if ( idim == 2 ) {

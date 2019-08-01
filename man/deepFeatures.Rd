@@ -4,7 +4,7 @@
 \alias{deepFeatures}
 \title{patch match two images with deep features}
 \usage{
-deepFeatures(x, mask, patchSize = 64)
+deepFeatures(x, mask, patchSize = 64, block_name)
 }
 \arguments{
 \item{x}{input input image}
@@ -12,6 +12,8 @@ deepFeatures(x, mask, patchSize = 64)
 \item{mask}{defines the object of interest in the fixedImage}
 
 \item{patchSize}{vector or scalar defining patch dimensions}
+
+\item{block_name}{name of vgg feature block (optional)}
 }
 \value{
 feature array, patches and patch coordinates
