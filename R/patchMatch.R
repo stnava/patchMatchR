@@ -520,7 +520,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
   if ( ! missing( block_name ) ) vggblocks[1] = block_name
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
-  if ( any( patchSize < 32 ) ) vggp = rep( 32, idim )
+  if ( any( patchSize < 32 ) ) vggp = rep( 32, 2 )
   if ( idim == 2 ) {
     vgg19 = application_vgg19(
         include_top = FALSE, weights = "imagenet",
@@ -542,21 +542,21 @@ deepFeatures <- function( x, mask, patchSize = 64,
     nchan = 1
     if ( vggblocks[1] == 'block2_conv2' ) {
       vggmodel = createVggModel3D( c( patchSize, 1 ), numberOfClassificationLabels = 1000,
-        layers = c( 1, 2 ), lowestResolution = 64,
+        layers = c( 1, 2, 3 ), lowestResolution = 64,
         convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
         strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
         style = 19, mode = "classification")
       vggmodel <- keras_model( inputs = vggmodel$input,
-        outputs = get_layer(vggmodel, index = 5 )$output)
+        outputs = get_layer(vggmodel, index = 6 )$output)
     } else {
     vggmodel = createVggModel3D( c( patchSize, nchan ), numberOfClassificationLabels = 1000,
          layers = c(1, 2, 3, 4, 4), lowestResolution = 64,
          convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
          strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
          style = 19, mode = "classification")
-    }
     vggmodel <- keras_model( inputs = vggmodel$input,
       outputs = get_layer(vggmodel, index = 5 )$output)
+    }
     vgg3Dweights = get_weights( vggmodel )
     vgg2Dweights = get_weights( vggmodel2D )
     for ( j in 1:nchan )
