@@ -562,6 +562,16 @@ deepFeatures <- function( x, mask, patchSize = 64, block_name ) {
   return( list( features=features, patches=patches0, patchCoords = patchCoords ) )
 }
 
+#' Fit transform to points
+#'
+#' @param movingPoints
+#' @param fixedPoints
+#' @param transformType
+#' @return antsTransform
+fitTransformToPairedPoints <-function( movingPoints, fixedPoints, transformType ) {
+  stop("not implemented")
+  # https://github.com/ANTsX/ANTs/blob/3f3cd4b775036345a28898ca9fe5a56f04ed4973/Examples/ANTSUseLandmarkImagesToGetAffineTransform.cxx#L84-L180
+}
 
 #' Random sample consensus (RANSAC)
 #'
