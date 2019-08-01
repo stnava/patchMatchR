@@ -6,6 +6,13 @@
 \usage{
 fitTransformToPairedPoints(movingPoints, fixedPoints, transformType)
 }
+\arguments{
+\item{movingPoints}{moving points matrix}
+
+\item{fixedPoints}{fixed points matrix}
+
+\item{transformType}{e.g. rigid or affine}
+}
 \value{
 antsTransform
 }

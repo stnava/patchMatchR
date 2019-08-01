@@ -594,9 +594,9 @@ deepFeatures <- function( x, mask, patchSize = 64,
 
 #' Fit transform to points
 #'
-#' @param movingPoints
-#' @param fixedPoints
-#' @param transformType
+#' @param movingPoints moving points matrix
+#' @param fixedPoints fixed points matrix
+#' @param transformType e.g. rigid or affine
 #' @return antsTransform
 fitTransformToPairedPoints <-function( movingPoints, fixedPoints, transformType ) {
   stop("not implemented")
