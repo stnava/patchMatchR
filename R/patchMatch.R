@@ -516,7 +516,7 @@ deepPatchMatch <- function(
 deepFeatures <- function( x, mask, patchSize = 64,
   featureSubset, block_name = 'block2_conv2' ) {
   idim = x@dimension
-  vggblocks = c( "block5_conv4", "block2_conv2" )
+  vggblocks = rev( c( "block5_conv4", "block2_conv2" ) )
   if ( ! missing( block_name ) ) vggblocks[1] = block_name
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
