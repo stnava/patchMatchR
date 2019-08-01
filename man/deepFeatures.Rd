@@ -4,7 +4,8 @@
 \alias{deepFeatures}
 \title{patch match two images with deep features}
 \usage{
-deepFeatures(x, mask, patchSize = 64, featureSubset, block_name)
+deepFeatures(x, mask, patchSize = 64, featureSubset,
+  block_name = "block2_conv2")
 }
 \arguments{
 \item{x}{input input image}

@@ -514,7 +514,7 @@ deepPatchMatch <- function(
 #'
 #' @export deepFeatures
 deepFeatures <- function( x, mask, patchSize = 64,
-  featureSubset, block_name ) {
+  featureSubset, block_name = 'block2_conv2' ) {
   idim = x@dimension
   vggblocks = c( "block5_conv4", "block2_conv2" )
   if ( ! missing( block_name ) ) vggblocks[1] = block_name
@@ -529,7 +529,6 @@ deepFeatures <- function( x, mask, patchSize = 64,
     vggmodel <- keras_model( inputs = vgg19$input,
         outputs = get_layer(vgg19, vggblocks[1] )$output)
     }
-
   if ( idim == 3 ) {
     vgg19 = application_vgg19(
       include_top = FALSE, weights = "imagenet",
@@ -540,11 +539,21 @@ deepFeatures <- function( x, mask, patchSize = 64,
       outputs = get_layer(vgg19, vggblocks[1] )$output)
     ######################################################################################
     nchan = 1
+    if ( vggblocks[1] == 'block2_conv2' ) {
+      vggmodel = createVggModel3D( c( patchSize, 1 ), numberOfClassificationLabels = 1000,
+        layers = c( 1, 2 ), lowestResolution = 64,
+        convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
+        strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
+        style = 19, mode = "classification")
+      vggmodel <- keras_model( inputs = vggmodel$input,
+        outputs = get_layer(vggmodel, index = 5 )$output)
+    } else {
     vggmodel = createVggModel3D( c( patchSize, nchan ), numberOfClassificationLabels = 1000,
          layers = c(1, 2, 3, 4, 4), lowestResolution = 64,
          convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
          strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
          style = 19, mode = "classification")
+    }
     vggmodel <- keras_model( inputs = vggmodel$input,
       outputs = get_layer(vggmodel, index = 5 )$output)
     vgg3Dweights = get_weights( vggmodel )
@@ -557,7 +566,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
       for ( j in 1:nchan )
         vgg3Dweights[[k]][ , , j, , ] = vgg2Dweights[[k]] / nchan
     set_weights( vggmodel, vgg3Dweights )
-    }
+  }
 
   x = iMath( x, "Normalize" ) * 255 - 127.5
   patches0 = extractImagePatches( x, patchSize, maskImage = mask,
