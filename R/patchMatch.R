@@ -440,7 +440,7 @@ matchedPatches <- function(
 #' }
 #'
 #' @export deepPatchMatch
-#' @importFrom ANTsRNet extractImagePatches extractImagePatchCoordinates
+#' @importFrom ANTsRNet extractImagePatches extractImagePatchCoordinates createVggModel3D
 #' @importFrom qlcMatrix colMin
 #' @importFrom abind abind
 #' @importFrom keras application_vgg19 keras_model get_layer
@@ -530,25 +530,24 @@ deepFeatures <- function( x, mask, patchSize = 64 ) {
         input_shape = c( patchSize, 3 ),
         classes = 1000)
     vgg19$trainable = FALSE
-    vggmodel2D <- keras_model( inputs = vgg19$input,
+    vggmodel <- keras_model( inputs = vgg19$input,
         outputs = get_layer(vgg19, vggblocks[1] )$output)
     }
 
   if ( idim == 3 ) {
     vgg19 = application_vgg19(
       include_top = FALSE, weights = "imagenet",
-      input_shape = c( patchSize, 3 ),
+      input_shape = c( patchSize[1], patchSize[2], 3 ),
       classes = 1000)
     vgg19$trainable = FALSE
-    freeze_weights( vgg19 )
     vggmodel2D <- keras_model( inputs = vgg19$input,
       outputs = get_layer(vgg19, vggblocks[1] )$output)
     ######################################################################################
     nchan = 1
-    vggmodel = createVggModel3D( c( psz, psz, psz, nchan ), numberOfClassificationLabels = 1000,
+    vggmodel = createVggModel3D( c( patchSize, nchan ), numberOfClassificationLabels = 1000,
          layers = c(1, 2, 3, 4, 4), lowestResolution = 64,
          convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
-         strides = c(2, 2, 2), denseUnits = 4096, dropoutRate = 0,
+         strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
          style = 19, mode = "classification")
     vggmodel <- keras_model( inputs = vggmodel$input,
       outputs = get_layer(vggmodel, index = 5 )$output)
@@ -570,9 +569,13 @@ deepFeatures <- function( x, mask, patchSize = 64 ) {
   patchCoords = extractImagePatchCoordinates( x, patchSize, maskImage = mask,
     maxNumberOfPatches=sum(mask), physicalCoordinates = T, randomSeed = 1 )
   patches = patches0
-  for( k in 2:3 )
-     patches = abind( patches, patches0, along = idim+2)
-  features = predict( vggmodel2D, patches )
+  if ( idim == 2 ) {
+    for( k in 2:3 )
+      patches = abind( patches, patches0, along = idim+2)
+    } else {
+      patches = array( patches, dim = c( dim( patches ), 1  ) )
+    }
+  features = predict( vggmodel, patches )
   vecdim = prod( dim( features )[-1]  )
   features = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
   return( list( features=features, patches=patches0, patchCoords = patchCoords ) )
