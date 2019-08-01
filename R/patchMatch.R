@@ -389,6 +389,7 @@ matchedPatches <- function(
 #' @param movingPatchSize integer greater than or equal to 32.
 #' @param fixedPatchSize integer greater than or equal to 32.
 #' @param knn k-nearest neighbors ( should be 1, for now )
+#' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
 #' @examples
@@ -450,11 +451,15 @@ deepPatchMatch <- function(
   movingImageMask,
   fixedImageMask,
   movingPatchSize = 32,
-  fixedPatchSize = 32, knn = 1 ) {
+  fixedPatchSize = 32, knn = 1, verbose = FALSE ) {
+  if ( verbose ) print("DF1")
   ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize )
+  if ( verbose ) print("DF2")
   mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize )
+  if ( verbose ) print("sdxy-begin")
   mydist = sparseDistanceMatrixXY(
     t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
+  if ( verbose ) print("sdxy-fin")
   matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   best1s = qlcMatrix::colMin( mydist, which = TRUE  )
@@ -473,29 +478,6 @@ deepPatchMatch <- function(
       matches = matches,
       costs = costs )
    )
-#  best1s = qlcMatrix::colMin( mydist, which = TRUE  )
-  if ( visualize & knn == 1 ) {
-    nP1 = nrow( ffeatures$patches )
-    best1 = NULL
-    ct = 1
-    while( ( is.null( best1 ) | length( best1 ) == 0 ) & ct < 100 ) {
-      ss = sample( 1:nP1, 1 )
-      best1 = which( best1s$which[,ss] )
-      ct = ct + 1
-      }
-    if ( ct == 100 ) message('Failed to match')
-    print( paste("Cost:",best1s$min[ss], "@",ss))
-    layout( matrix(1:2,nrow=1) )
-    plot( as.antsImage( ffeatures$patches[ss,,] ) )
-    if ( length( best1 ) > 0 )
-      plot( as.antsImage( mfeatures$patches[best1,,] ) )
-  }
-  return( list(
-    distances = mydist,
-    matches = best1s,
-   ffeatures = ffeatures,
-   mfeatures = mfeatures )
- )
 }
 
 
@@ -506,9 +488,6 @@ deepPatchMatch <- function(
 #' @param x input input image
 #' @param mask defines the object of interest in the fixedImage
 #' @param patchSize vector or scalar defining patch dimensions
-#' @param strideLength Defines the sequential patch overlap for
-#' \code{maxNumberOfPatches = "all"}.  Can be a image-dimensional vector or a
-#' scalar.
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples

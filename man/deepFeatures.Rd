@@ -12,10 +12,6 @@ deepFeatures(x, mask, patchSize = 64)
 \item{mask}{defines the object of interest in the fixedImage}
 
 \item{patchSize}{vector or scalar defining patch dimensions}
-
-\item{strideLength}{Defines the sequential patch overlap for
-\code{maxNumberOfPatches = "all"}.  Can be a image-dimensional vector or a
-scalar.}
 }
 \value{
 feature array, patches and patch coordinates
