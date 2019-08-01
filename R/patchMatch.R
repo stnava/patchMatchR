@@ -373,3 +373,140 @@ matchedPatches <- function(
   }
   return( list( fixPatchList = fixPatchList, movPatchList = movPatchList ) )
 }
+
+
+
+#' patch match two images with deep features
+#'
+#' High-level function for deep patch matching that makes many assumptions and
+#' therefore minimizes the number of parameters the user needs to choose.
+#'
+#' @param movingImage input image from which we extract patches that are
+#' transformed to the space of the fixed image
+#' @param fixedImage input image that provides the fixed reference domain.
+#' @param movingImageMask defines the object of interest in the movingImage
+#' @param fixedImageMask defines the object of interest in the fixedImage
+#' @param movingPatchSize integer greater than or equal to 32.
+#' @param fixedPatchSize integer greater than or equal to 32.
+#' @param knn k-nearest neighbors ( should be 1, for now )
+#' @param visualize boolean
+#' @return correspondence data
+#' @author Avants BB
+#' @examples
+#'
+#' library( keras )
+#' library( ANTsR )
+#' nP1 = 5
+#' nP2 = 20
+#' psz = 32
+#' img <- ri( 1 ) %>% iMath( "Normalize" )
+#' img2 <- ri( 2 ) %>% iMath( "Normalize" )
+#' mask = randomMask( getMask( img ), nP1 )
+#' mask2 = randomMask( getMask( img2 ), nP2 )
+#' match = deepPatchMatch( img2, img, mask, mask2 )
+#'
+#' @export deepPatchMatch
+#' @importFrom ANTsRNet extractImagePatches
+#' @importFrom qlcMatrix colMin
+#' @importFrom abind abind
+#' @importFrom keras application_vgg19 keras_model get_layer
+deepPatchMatch <- function(
+  movingImage,
+  fixedImage,
+  movingImageMask,
+  fixedImageMask,
+  movingPatchSize = 32,
+  fixedPatchSize = 32, knn = 1, visualize = FALSE ) {
+  ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize )
+  mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize )
+  mydist = sparseDistanceMatrixXY(
+    t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
+  matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
+  costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
+  for ( k in 1:nrow(matches) ) {
+    matches[ k, ] = which( mydist[k,] > 0  )
+    costs[k, ] = mydist[k,  mydist[k,] > 0  ]
+  }
+  return(
+    list(
+      distanceMatrix = mydist,
+      ffeatures = ffeatures,
+      mfeatures = mfeatures,
+      matches = matches,
+      costs = costs )
+   )
+#  best1s = qlcMatrix::colMin( mydist, which = TRUE  )
+  if ( visualize & knn == 1 ) {
+    nP1 = nrow( ffeatures$patches )
+    best1 = NULL
+    ct = 1
+    while( ( is.null( best1 ) | length( best1 ) == 0 ) & ct < 100 ) {
+      ss = sample( 1:nP1, 1 )
+      best1 = which( best1s$which[,ss] )
+      ct = ct + 1
+      }
+    if ( ct == 100 ) message('Failed to match')
+    print( paste("Cost:",best1s$min[ss], "@",ss))
+    layout( matrix(1:2,nrow=1) )
+    plot( as.antsImage( ffeatures$patches[ss,,] ) )
+    if ( length( best1 ) > 0 )
+      plot( as.antsImage( mfeatures$patches[best1,,] ) )
+  }
+  return( list(
+    distances = mydist,
+    matches = best1s,
+   ffeatures = ffeatures,
+   mfeatures = mfeatures )
+ )
+}
+
+
+#' patch match two images with deep features
+#'
+#' High-level function for extracting features based on a pretrained network.
+#'
+#' @param x input input image
+#' @param mask defines the object of interest in the fixedImage
+#' @param patchSize vector or scalar defining patch dimensions
+#' @param strideLength Defines the sequential patch overlap for
+#' \code{maxNumberOfPatches = "all"}.  Can be a image-dimensional vector or a
+#' scalar.
+#' @return feature array
+#' @author Avants BB
+#' @examples
+#'
+#' library(ANTsR)
+#' img <- ri( 1 ) %>% iMath( "Normalize" )
+#' mask = randomMask( getMask( img ), 20 )
+#' features = deepFeatures( img, mask, patchSize = 32 )
+#'
+#' @export deepFeatures
+deepFeatures <- function( x, mask, patchSize = 64 ) {
+  idim = x@dimension
+  if ( any( patchSize < 32 ) ) stop("Patch size must be at least 32x32")
+  if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
+  if ( idim == 2 ) {
+    vgg19 = application_vgg19(
+        include_top = FALSE, weights = "imagenet",
+        input_shape = c( patchSize, 3 ),
+        classes = 1000)
+    vgg19$trainable = FALSE
+    vggmodel2D <- keras_model( inputs = vgg19$input,
+        outputs = get_layer(vgg19, 'block5_conv4')$output)
+    }
+
+  if ( idim == 3 ) {
+
+    }
+
+  x = iMath( x, "Normalize" ) * 255 - 127.5
+  patches0 = extractImagePatches( x, patchSize, maskImage = mask,
+    maxNumberOfPatches=sum(mask), returnAsArray = T, randomSeed = 1 )
+  patches = patches0
+  for( k in 2:3 )
+     patches = abind( patches, patches0, along = idim+2)
+  features = predict( vggmodel2D, patches )
+  vecdim = prod( dim( features )[-1]  )
+  features = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
+  return( list( features=features, patches=patches0 ) )
+}

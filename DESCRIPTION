@@ -20,8 +20,13 @@ Imports:
     knitr,
     magrittr
 Suggests:
+    abind,
+    ANTsRNet,
     ggplot2,
-    rmarkdown
+    keras,
+    qlcMatrix,
+    rmarkdown,
+    tensorflow
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.1
 VignetteBuilder: knitr
