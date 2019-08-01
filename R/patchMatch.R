@@ -443,7 +443,7 @@ matchedPatches <- function(
 #' @importFrom ANTsRNet extractImagePatches extractImagePatchCoordinates createVggModel3D
 #' @importFrom qlcMatrix colMin
 #' @importFrom abind abind
-#' @importFrom keras application_vgg19 keras_model get_layer
+#' @importFrom keras application_vgg19 keras_model get_layer get_weights set_weights
 deepPatchMatch <- function(
   movingImage,
   fixedImage,
