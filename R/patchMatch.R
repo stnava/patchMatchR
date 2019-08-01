@@ -389,6 +389,7 @@ matchedPatches <- function(
 #' @param movingPatchSize integer greater than or equal to 32.
 #' @param fixedPatchSize integer greater than or equal to 32.
 #' @param knn k-nearest neighbors ( should be 1, for now )
+#' @param featureSubset a vector that selects a subset of features
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -451,11 +452,23 @@ deepPatchMatch <- function(
   movingImageMask,
   fixedImageMask,
   movingPatchSize = 32,
-  fixedPatchSize = 32, knn = 1, verbose = FALSE ) {
-  if ( verbose ) print("DF1")
-  ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize )
-  if ( verbose ) print("DF2")
-  mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize )
+  fixedPatchSize = 32,
+  knn = 1,
+  featureSubset,
+  verbose = FALSE ) {
+  if ( missing( featureSubset ) ) {
+    if ( verbose ) print("DF1")
+    ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize )
+    if ( verbose ) print("DF2")
+    mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize )
+  } else {
+    if ( verbose ) print("DF1-subset")
+    ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize,
+      featureSubset = featureSubset )
+    if ( verbose ) print("DF2-subset")
+    mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
+      featureSubset = featureSubset )
+  }
   if ( verbose ) print("sdxy-begin")
   mydist = sparseDistanceMatrixXY(
     t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
@@ -488,6 +501,7 @@ deepPatchMatch <- function(
 #' @param x input input image
 #' @param mask defines the object of interest in the fixedImage
 #' @param patchSize vector or scalar defining patch dimensions
+#' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block (optional)
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
@@ -499,7 +513,8 @@ deepPatchMatch <- function(
 #' features = deepFeatures( img, mask, patchSize = 32 )
 #'
 #' @export deepFeatures
-deepFeatures <- function( x, mask, patchSize = 64, block_name ) {
+deepFeatures <- function( x, mask, patchSize = 64,
+  featureSubset, block_name ) {
   idim = x@dimension
   vggblocks = c( "block5_conv4", "block2_conv2" )
   if ( ! missing( block_name ) ) vggblocks[1] = block_name
@@ -558,7 +573,11 @@ deepFeatures <- function( x, mask, patchSize = 64, block_name ) {
     }
   features = predict( vggmodel, patches )
   vecdim = prod( dim( features )[-1]  )
+  if ( any( featureSubset > vecdim ) )
+    featureSubset = featureSubset[ featureSubset <= vecdim ]
   features = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
+  if ( ! missing( "featureSubset" ) )
+    features = features[,featureSubset]
   return( list( features=features, patches=patches0, patchCoords = patchCoords ) )
 }
 
