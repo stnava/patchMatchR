@@ -26,7 +26,8 @@ transformed to the space of the fixed image}
 
 \item{featureSubset}{a vector that selects a subset of features}
 
-\item{block_name}{name of vgg feature block, either block2_conv2 or integer}
+\item{block_name}{name of vgg feature block, either block2_conv2 or integer.
+use the former for smaller patch sizes.}
 
 \item{verbose}{boolean}
 }
