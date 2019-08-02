@@ -605,7 +605,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
   patches0 = extractImagePatches( x, patchSize, maskImage = mask,
     maxNumberOfPatches=sum(mask), returnAsArray = T, randomSeed = 1 )
   patchCoords = extractImagePatchCoordinates( x, patchSize, maskImage = mask,
-    maxNumberOfPatches=sum(mask), physicalCoordinates = T, randomSeed = 1 )
+    maxNumberOfPatches=sum(mask), physicalCoordinates = FALSE, cornerCoordinates=TRUE, randomSeed = 1 )
   patches = patches0
   if ( idim == 2 ) {
     for( k in 2:3 )
