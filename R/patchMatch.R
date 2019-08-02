@@ -533,8 +533,10 @@ deepFeatures <- function( x, mask, patchSize = 64,
       vggmodel <- keras_model( inputs = vggmodel$input,
         outputs = get_layer(vggmodel, index = 6 )$output)
     } else {
+    lays = c(1, 2, 3, 4, 4 )
+    if ( block_name <= 6 ) lays = c( 1, 2, 3 )
     vggmodel = createVggModel2D( c( patchSize, 3 ), numberOfClassificationLabels = 1000,
-         layers = c(1, 2, 3, 4, 4 ), lowestResolution = 64,
+         layers = lays, lowestResolution = 64,
          convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
          strides = c(2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
          style = 19, mode = "classification")
