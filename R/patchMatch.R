@@ -390,7 +390,8 @@ matchedPatches <- function(
 #' @param fixedPatchSize integer greater than or equal to 32.
 #' @param knn k-nearest neighbors ( should be 1, for now )
 #' @param featureSubset a vector that selects a subset of features
-#' @param block_name name of vgg feature block, either block2_conv2 or integer
+#' @param block_name name of vgg feature block, either block2_conv2 or integer.
+#' use the former for smaller patch sizes.
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -506,7 +507,8 @@ deepPatchMatch <- function(
 #' @param mask defines the object of interest in the fixedImage
 #' @param patchSize vector or scalar defining patch dimensions
 #' @param featureSubset a vector that selects a subset of features
-#' @param block_name name of vgg feature block, either block2_conv2 or integer
+#' @param block_name name of vgg feature block, either block2_conv2 or integer.
+#' use the former for smaller patch sizes.
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
