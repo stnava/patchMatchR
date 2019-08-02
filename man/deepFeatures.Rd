@@ -16,7 +16,7 @@ deepFeatures(x, mask, patchSize = 64, featureSubset,
 
 \item{featureSubset}{a vector that selects a subset of features}
 
-\item{block_name}{name of vgg feature block (optional)}
+\item{block_name}{name of vgg feature block, either block2_conv2 or integer}
 }
 \value{
 feature array, patches and patch coordinates
