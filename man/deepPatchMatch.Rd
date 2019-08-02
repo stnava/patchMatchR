@@ -6,7 +6,7 @@
 \usage{
 deepPatchMatch(movingImage, fixedImage, movingImageMask, fixedImageMask,
   movingPatchSize = 32, fixedPatchSize = 32, knn = 1, featureSubset,
-  verbose = FALSE)
+  block_name = "block2_conv2", verbose = FALSE)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are
@@ -25,6 +25,8 @@ transformed to the space of the fixed image}
 \item{knn}{k-nearest neighbors ( should be 1, for now )}
 
 \item{featureSubset}{a vector that selects a subset of features}
+
+\item{block_name}{name of vgg feature block, either block2_conv2 or integer}
 
 \item{verbose}{boolean}
 }

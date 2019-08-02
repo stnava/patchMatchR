@@ -390,6 +390,7 @@ matchedPatches <- function(
 #' @param fixedPatchSize integer greater than or equal to 32.
 #' @param knn k-nearest neighbors ( should be 1, for now )
 #' @param featureSubset a vector that selects a subset of features
+#' @param block_name name of vgg feature block, either block2_conv2 or integer
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -455,19 +456,22 @@ deepPatchMatch <- function(
   fixedPatchSize = 32,
   knn = 1,
   featureSubset,
+  block_name = 'block2_conv2',
   verbose = FALSE ) {
   if ( missing( featureSubset ) ) {
     if ( verbose ) print("DF1")
-    ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize )
+    ffeatures = deepFeatures( fixedImage, fixedImageMask,
+      patchSize = fixedPatchSize, block_name = block_name  )
     if ( verbose ) print("DF2")
-    mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize )
+    mfeatures = deepFeatures( movingImage, movingImageMask,
+      patchSize = movingPatchSize, block_name = block_name  )
   } else {
     if ( verbose ) print("DF1-subset")
     ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize,
-      featureSubset = featureSubset )
+      featureSubset = featureSubset, block_name = block_name )
     if ( verbose ) print("DF2-subset")
     mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
-      featureSubset = featureSubset )
+      featureSubset = featureSubset, block_name = block_name  )
   }
   if ( verbose ) print("sdxy-begin")
   mydist = sparseDistanceMatrixXY(
