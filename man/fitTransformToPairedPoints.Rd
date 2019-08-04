@@ -12,7 +12,7 @@ fitTransformToPairedPoints(movingPoints, fixedPoints,
 
 \item{fixedPoints}{fixed points matrix}
 
-\item{transformType}{e.g. rigid or affine, only affine, rigid and similarity currently supported}
+\item{transformType}{affine, rigid and similarity currently supported}
 
 \item{lambda}{ridge penalty}
 }

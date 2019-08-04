@@ -628,7 +628,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
 #'
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
-#' @param transformType e.g. rigid or affine, only affine, rigid and similarity currently supported
+#' @param transformType affine, rigid and similarity currently supported
 #' @param lambda ridge penalty
 #' @return antsTransform
 fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
