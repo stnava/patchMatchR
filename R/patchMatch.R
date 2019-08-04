@@ -628,11 +628,104 @@ deepFeatures <- function( x, mask, patchSize = 64,
 #'
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
-#' @param transformType e.g. rigid or affine
+#' @param transformType e.g. rigid or affine, only affine, rigid and similarity currently supported
+#' @param lambda ridge penalty
 #' @return antsTransform
-fitTransformToPairedPoints <-function( movingPoints, fixedPoints, transformType ) {
-  stop("not implemented")
+fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
+  transformType = "Affine", lambda = 1e-4 ) {
+
+# x: fixedLandmarks
+# y: movingLandmarks
+# (A,t,c) : affine transform, A:3*3, t: 3*1 c: 3*1 (c is the center of all points in x)
+# y-c = A*(x-c) + t;
+# steps:
+# 1. c = average of points of x
+# 2. let y1 = y-c; x1 = x - c; x11 = [x1; 1 ... 1] # extend x11
+# 3. minimize (y1-A1*x11)^2, A1 is a 3*4 matrix
+# 4. A = A1(1:3, 1:3), t = A1(1:3, 4);
+# step 3:
+#   A11 = (y1*x11')*(x11*x11')^(-1)
+
   # https://github.com/ANTsX/ANTs/blob/3f3cd4b775036345a28898ca9fe5a56f04ed4973/Examples/ANTSUseLandmarkImagesToGetAffineTransform.cxx#L84-L180
+  generateData = FALSE
+  if ( generateData ) {
+    img = ri( 1 )
+    img2 = ri( 5 )
+    aff = antsRegistration( img, img2, "Rigid" )
+    trueTx = readAntsrTransform( aff$fwdtransforms )
+    fixedParams = getAntsrTransformFixedParameters( trueTx )
+    txParams = getAntsrTransformParameters( trueTx )
+    # find some fixed and moving points
+    msk = getMask( img )
+    rmsk = randomMask( msk, 20 ) %>% labelClusters( 1 ) %>% iMath("GD",1)
+    rmskTx = antsApplyTransforms( img2, rmsk, transformlist = aff$fwdtransforms,
+      whichtoinvert = c(TRUE), interpolator = 'nearestNeighbor' )
+    fixedPoints = getCentroids( rmsk )[,1:2]
+    movingPoints = getCentroids( rmskTx )[,1:2]
+    movingPoints2 = applyAntsrTransformToPoint( trueTx, fixedPoints )
+    }
+  n = nrow( fixedPoints )
+  idim = ncol( fixedPoints )
+  x = fixedPoints
+  y = movingPoints
+
+  # 1. c = average of points of x
+  # 2. let y1 = y-c; x1 = x - c; x11 = [x1; 1 ... 1] # extend x11
+  centerX = colMeans( x )
+  centerY = colMeans( y )
+  for ( i in 1:nrow( x ) ) {
+    x[i,] = x[i,] - centerX
+    y[i,] = y[i,] - centerY
+    }
+  x11 = cbind( x, rep( 1, nrow(x)))
+  if ( transformType == 'Affine' ) {
+  # 3. minimize (y1-A1*x11)^2, A1 is a 3*4 matrix
+    temp = qr.solve( x11, y )
+    A = temp[1:idim, 1:idim ]
+  }
+  if ( transformType %in% c("Rigid", "Similarity" ) ) {
+#    Kabsch Algorithm.
+    covmat = t( y ) %*% x
+    x_svd <- svd( covmat  + diag(idim) * lambda)
+    A = x_svd$u %*% t( x_svd$v )
+    covmat = t( x ) %*% y
+    x_svd <- svd( covmat + diag(idim) * lambda )
+    A2 = x_svd$v %*% t( x_svd$u )
+    # Direction adjustment
+    if ( det( A ) < 1 ) {
+      signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
+      A = A %*% signadj
+    }
+    if ( det( A2 ) < 1 ) {
+      signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
+      A2 = A2 %*% signadj
+    }
+    if ( transformType == "Similarity" ) {
+      stop("Similarity Not Done Yet")
+      # https://stackoverflow.com/questions/13432805/finding-translation-and-scale-on-two-sets-of-points-to-get-least-square-error-in
+      P <- x_svd$u %*% diag(x_svd$d) %*% t(x_svd$u)
+      Z <- x_svd$u %*% t(x_svd$v)
+      A = ( A %*% ( diag( idim ) *  det( P ) ) )
+      }
+  }
+  trans = temp[idim+1,] + centerY - centerX
+  aff = createAntsrTransform( matrix = A, translation = trans, dimension = idim,
+    center = centerX  ) %>% invertAntsrTransform()
+  movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
+  if ( exists("A2") & transformType == 'Rigid' ) {
+    aff2 = createAntsrTransform( matrix = A2, translation = trans, dimension = idim,
+      center = centerX  ) %>% invertAntsrTransform()
+    movingPointsTx2 = applyAntsrTransformToPoint( aff2, movingPoints )
+    if ( norm( movingPointsTx - fixedPoints, type = 'F' ) <
+         norm( movingPointsTx2 - fixedPoints, type = 'F'  ) ) aff = aff2
+    print( paste(
+      norm( movingPointsTx - fixedPoints, type = 'F' ),
+      norm( movingPointsTx2 - fixedPoints, type = 'F' )
+      )  )
+    }
+  movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
+#  print( norm( movingPointsTx - fixedPoints, "F" ) )
+  return( aff )
 }
 
 #' Random sample consensus (RANSAC)

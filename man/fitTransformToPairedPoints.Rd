@@ -4,14 +4,17 @@
 \alias{fitTransformToPairedPoints}
 \title{Fit transform to points}
 \usage{
-fitTransformToPairedPoints(movingPoints, fixedPoints, transformType)
+fitTransformToPairedPoints(movingPoints, fixedPoints,
+  transformType = "Affine", lambda = 1e-04)
 }
 \arguments{
 \item{movingPoints}{moving points matrix}
 
 \item{fixedPoints}{fixed points matrix}
 
-\item{transformType}{e.g. rigid or affine}
+\item{transformType}{e.g. rigid or affine, only affine, rigid and similarity currently supported}
+
+\item{lambda}{ridge penalty}
 }
 \value{
 antsTransform
