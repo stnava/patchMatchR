@@ -628,12 +628,15 @@ deepFeatures <- function( x, mask, patchSize = 64,
 #'
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
-#' @param transformType affine, rigid and similarity currently supported
+#' @param transformType Affine, Rigid and Similarity currently supported
 #' @param lambda ridge penalty
-#' @return antsTransform
+#' @return antsTransform that maps the moving image to the fixed image space.
+#' the inverse transform maps the moving points to the fixed space.
 fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
   transformType = "Affine", lambda = 1e-4 ) {
-
+    if ( ! any( transformType %in% c( "Rigid", "Affine", "Similarity") ) )
+      stop("Transform not supported")
+######################
 # x: fixedLandmarks
 # y: movingLandmarks
 # (A,t,c) : affine transform, A:3*3, t: 3*1 c: 3*1 (c is the center of all points in x)
@@ -650,14 +653,15 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
   generateData = FALSE
   if ( generateData ) {
     img = ri( 1 )
+    antsSetSpacing( img, rep( 0.8 , 2 ) )
     img2 = ri( 5 )
-    aff = antsRegistration( img, img2, "Rigid" )
-    trueTx = readAntsrTransform( aff$fwdtransforms )
+    aff = antsRegistration( img, img2, "Affine" )
+    trueTx = readAntsrTransform( aff$fwdtransforms ) %>% invertAntsrTransform()
     fixedParams = getAntsrTransformFixedParameters( trueTx )
     txParams = getAntsrTransformParameters( trueTx )
     # find some fixed and moving points
     msk = getMask( img )
-    rmsk = randomMask( msk, 20 ) %>% labelClusters( 1 ) %>% iMath("GD",1)
+    rmsk = randomMask( msk, 55 ) %>% labelClusters( 1 ) %>% iMath("GD",2)
     rmskTx = antsApplyTransforms( img2, rmsk, transformlist = aff$fwdtransforms,
       whichtoinvert = c(TRUE), interpolator = 'nearestNeighbor' )
     fixedPoints = getCentroids( rmsk )[,1:2]
@@ -678,53 +682,38 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
     y[i,] = y[i,] - centerY
     }
   x11 = cbind( x, rep( 1, nrow(x)))
-  if ( transformType == 'Affine' ) {
   # 3. minimize (y1-A1*x11)^2, A1 is a 3*4 matrix
-    temp = qr.solve( x11, y )
-    A = temp[1:idim, 1:idim ]
-  }
-  if ( transformType %in% c("Rigid", "Similarity" ) ) {
-#    Kabsch Algorithm.
-    covmat = t( y ) %*% x
-    x_svd <- svd( covmat  + diag(idim) * lambda)
-    A = x_svd$u %*% t( x_svd$v )
-    covmat = t( x ) %*% y
-    x_svd <- svd( covmat + diag(idim) * lambda )
-    A2 = x_svd$v %*% t( x_svd$u )
-    # Direction adjustment
-    if ( det( A ) < 1 ) {
-      signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
-      A = A %*% signadj
-    }
-    if ( det( A2 ) < 1 ) {
-      signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
-      A2 = A2 %*% signadj
-    }
-    if ( transformType == "Similarity" ) {
-      stop("Similarity Not Done Yet")
-      # https://stackoverflow.com/questions/13432805/finding-translation-and-scale-on-two-sets-of-points-to-get-least-square-error-in
-      P <- x_svd$u %*% diag(x_svd$d) %*% t(x_svd$u)
-      Z <- x_svd$u %*% t(x_svd$v)
-      A = ( A %*% ( diag( idim ) *  det( P ) ) )
-      }
-  }
+  temp = qr.solve( x11, y )
+  A = t( temp[1:idim, 1:idim ] )
   trans = temp[idim+1,] + centerY - centerX
-  aff = createAntsrTransform( matrix = A, translation = trans, dimension = idim,
-    center = centerX  ) %>% invertAntsrTransform()
-  movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
-  if ( exists("A2") & transformType == 'Rigid' ) {
-    aff2 = createAntsrTransform( matrix = A2, translation = trans, dimension = idim,
-      center = centerX  ) %>% invertAntsrTransform()
-    movingPointsTx2 = applyAntsrTransformToPoint( aff2, movingPoints )
-    if ( norm( movingPointsTx - fixedPoints, type = 'F' ) <
-         norm( movingPointsTx2 - fixedPoints, type = 'F'  ) ) aff = aff2
-    print( paste(
-      norm( movingPointsTx - fixedPoints, type = 'F' ),
-      norm( movingPointsTx2 - fixedPoints, type = 'F' )
-      )  )
+  if ( transformType %in% c("Rigid", "Similarity" ) ) {
+    # http://web.stanford.edu/class/cs273/refs/umeyama.pdf
+#    Kabsch Algorithm.
+    covmat = ( t( y ) %*% x )
+    x_svd <- svd( covmat  + diag(idim) * lambda)
+    myd = det( x_svd$u %*% t( x_svd$v ) )
+    signadj = diag( idim )
+    if ( myd > 0 ) A = x_svd$u %*% t( x_svd$v ) else {
+      signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
+      A = ( x_svd$u %*% signadj ) %*% t( x_svd$v )
     }
-  movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
-#  print( norm( movingPointsTx - fixedPoints, "F" ) )
+    scaling = 1
+    if ( transformType == "Similarity" ) {
+      scaling =  sqrt( mean( rowSums( y^2 )/n )  ) /
+                 sqrt( mean( rowSums( x^2 )/n )  )
+      }
+    A = A %*% ( diag( idim ) * scaling )
+  }
+  aff = createAntsrTransform( matrix = A, translation = trans, dimension = idim,
+    center = centerX  )
+  if ( generateData ) {
+    aff = invertAntsrTransform( aff )
+    movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
+    movingPointsTx2 = applyAntsrTransformToPoint( trueTx, movingPoints )
+    print( paste( myd,
+      norm( movingPointsTx - fixedPoints, "F" ),
+      norm( movingPointsTx2 - fixedPoints, "F" ) ) )
+    }
   return( aff )
 }
 

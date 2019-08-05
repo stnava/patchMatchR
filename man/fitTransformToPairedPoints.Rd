@@ -12,12 +12,13 @@ fitTransformToPairedPoints(movingPoints, fixedPoints,
 
 \item{fixedPoints}{fixed points matrix}
 
-\item{transformType}{affine, rigid and similarity currently supported}
+\item{transformType}{Affine, Rigid and Similarity currently supported}
 
 \item{lambda}{ridge penalty}
 }
 \value{
-antsTransform
+antsTransform that maps the moving image to the fixed image space.
+the inverse transform maps the moving points to the fixed space.
 }
 \description{
 Fit transform to points
