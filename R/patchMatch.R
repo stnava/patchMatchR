@@ -626,12 +626,17 @@ deepFeatures <- function( x, mask, patchSize = 64,
 
 #' Fit transform to points
 #'
+#' This function will use either the Kabsch algorithm or a least squares fitting
+#' algorithm to match the pairs of points that the user provides.  An antsr
+#' transform is returned.
+#'
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
 #' @param transformType Affine, Rigid and Similarity currently supported
 #' @param lambda ridge penalty
 #' @return antsTransform that maps the moving image to the fixed image space.
-#' the inverse transform maps the moving points to the fixed space.
+#' the inverse transform maps the moving points to the fixed space. associated
+#' error is also returned.'
 fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
   transformType = "Affine", lambda = 1e-4 ) {
     if ( ! any( transformType %in% c( "Rigid", "Affine", "Similarity") ) )
@@ -661,7 +666,7 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
     txParams = getAntsrTransformParameters( trueTx )
     # find some fixed and moving points
     msk = getMask( img )
-    rmsk = randomMask( msk, 55 ) %>% labelClusters( 1 ) %>% iMath("GD",2)
+    rmsk = randomMask( msk, 555 ) %>% labelClusters( 1 ) %>% iMath("GD",2)
     rmskTx = antsApplyTransforms( img2, rmsk, transformlist = aff$fwdtransforms,
       whichtoinvert = c(TRUE), interpolator = 'nearestNeighbor' )
     fixedPoints = getCentroids( rmsk )[,1:2]
@@ -713,99 +718,87 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
     print( paste( myd,
       norm( movingPointsTx - fixedPoints, "F" ),
       norm( movingPointsTx2 - fixedPoints, "F" ) ) )
+    } else {
+      err = norm( movingPoints - applyAntsrTransformToPoint( aff, fixedPoints ), "F" )
     }
-  return( aff )
+  return( list( transform = aff, error = err/n ) )
 }
 
 #' Random sample consensus (RANSAC)
 #'
-#' @param data dataframe with target column and model matrix columns
-#' @param y_col name of target column
-#' @param model model function to fit
-#' @param model_args list, arguments to the model
-#' @param n the minimum number of data values required to fit the model
-#' @param k the maximum number of iterations allowed in the algorithm
-#' @param t a threshold value for determining when a data point fits a model
-#' @param d the number of close data values required to assert that a model fits well to data
+#' @param movingPoints moving points matrix
+#' @param fixedPoints fixed points matrix
+#' @param transformType Affine, Rigid and Similarity currently supported
+#' @param minNtoFit the minimum number of data values required to fit the model.
+#' this value will be used at each iteration to fit the subset model.
+#' @param maxIterations the maximum number of iterations allowed in the algorithm
+#' @param errorThreshold a threshold value for determining when a test data point fits a model.
+#' this parameter is set based on the standard deviation in the random subset model.
+#' that is, a point fits the model error distribution if it is within the bracket
+#' of values between mean error plus or minus sd error times errorThreshold.
+#' @param goodProportion the fraction of close data values required to assert that a model
+#' fits well to data.  that is, if equal to 0.5, then one would need 50 points to
+#' assert that a model fit is good if the whole dataset contains 100 points.
+#' @param lambda ridge penalty
+#' @param verbose boolean
 #'
-#' @return a list of output contains best fitted model, inliers, outliers
+#' @return output list contains best fitted model, inliers, outliers
 #'
-RANSAC <- function(data, y_col, model, model_args, n = 2, k = NA, t = NA, d = NA, verbose = FALSE) {
-
-  default_ratio = 0.7
-
-  model_args_all <- c(model_args, data = list(data))
-  model_all <- do.call(model, args = model_args_all)
-  err_abs <- abs(data[, y_col] - predict(model_all, newdata = data[, names(df) != y_col, drop=FALSE]))
-
-  if(is.na(t)) {
-    t <- quantile(err_abs, 0.5, names = FALSE)
-  }
-  if(is.na(d)) {
-    d <- nrow(data)*default_ratio
-  }
-  if(is.na(k)) {
-    k <- as.integer(log(1 - 0.99) / log(1 - default_ratio^n))
-  }
-
-  mae_best <- mean(err_abs)
-  ind <- 1:nrow(data)
-  inliers <- c()
-  i = 1
-
-  if(verbose) {
-    progress_pct = round(quantile(seq(1, k, length.out = 10), probs = seq(0.1, 1, length.out = 10)), 0)
-    cat(sprintf("Begin RANSAC algoritm with parameters:\nn = %s\nk = %s\nt = %s \nd = %s\n\n", n, k, t, d))
-  }
-
-  while(i <= k) {
-
-    if(verbose && (i %in% progress_pct) ) {
-      cat(sprintf("Completion percentage: %s\n", names(progress_pct)[which(i == progress_pct)]))
-    }
-
-    inliers_case <- sample(ind, n)
-    model_args_case <- c(model_args, data = list(data[inliers_case, , drop=FALSE]))
-    model_case <- do.call(model, model_args_case)
-
-    predict_args_case = list(
-      object = model_case,
-      newdata = data[-inliers_case, , drop=FALSE]
-    )
-    yhat <- do.call(predict, predict_args_case)
-    y <- data[-inliers_case, y_col]
-    res <- abs(yhat - y)
-
-    inliers_case <- c(inliers_case, names(res)[which(res < t)])
-    if(length(inliers_case) > d) {
-      data_inliers <- data[inliers_case, , drop=FALSE]
-      model_inliers_args <- c(model_args, data = list(data_inliers))
-      model_inliers <- do.call(model, model_inliers_args)
-
-      predict_inliers_args_case = list(
-        object = model_inliers,
-        newdata = data_inliers
-      )
-      mae_inliers <- mean(abs(data_inliers[, y_col] - do.call(predict, predict_inliers_args_case)))
-      if(mae_inliers < mae_best) {
-        model_best <- model_inliers
-        mae_best <- mae_inliers
-        inliers <- inliers_case
+RANSAC <- function(
+  fixedPoints,
+  movingPoints,
+  minNtoFit = 16,
+  maxIterations = 20,
+  errorThreshold = 1,
+  goodProportion = 0.5,
+  lambda = 1e-4,
+  verbose = FALSE ) {
+  # 1 Select a random subset of the original data. Call this subset the hypothetical inliers.
+  # 2 A model is fitted to the set of hypothetical inliers.
+  # 3 All other data are then tested against the fitted model.
+  #     Those points that fit the estimated model well, according to some
+  #     model-specific loss function, are considered as part of the consensus set.
+  # 4 The estimated model is reasonably good if sufficiently many points have been classified as part of the consensus set.
+  # 5 Afterwards, the model may be improved by reestimating it using all members of the consensus set.
+  nMax = nrow( fixedPoints )
+  d = round( nMax * goodProportion )
+  nInliers = 0
+  nIterations = 0
+  bestModel = NULL
+  bestErr = Inf
+  while ( nInliers < d & nIterations < maxIterations ) {
+    nIterations = nIterations + 1
+    randSubset = sample( 1:nMax, minNtoFit )         # step 1
+    modelFit = fitTransformToPairedPoints(   # step 2
+      movingPoints[ randSubset, ],
+      fixedPoints[ randSubset, ],
+      transformType = transformType, lambda = lambda )
+    mapComplement = applyAntsrTransformToPoint( modelFit$transform, fixedPoints )
+    err = sqrt( rowMeans( ( movingPoints - fixedPoints )^2 ) )
+    mn1 = mean( err[ randSubset ] )
+    sd1 = sd( err[ randSubset ] )
+    meanInValBracket = mn1 + sd1 * c( -1, 1 ) * errorThreshold
+    inliers = which( err > meanInValBracket[1] & err < meanInValBracket[2] )
+    if ( modelFit$err < bestErr & length( inliers ) > nInliers &
+      length( inliers ) > minNtoFit ) {
+      bestErr = modelFit$err
+      bestModel = modelFit
+      fullInliers = inliers
+      nInliers = length( fullInliers )
       }
+    if ( verbose )
+      print( paste( "It:", nIterations, "nIn:", length( inliers ),
+        mean( err[ randSubset ] ), "v",  mean( err[ -randSubset ] ) ) )
     }
-    i = i + 1
-  }
-
-  if(!exists("model_best")) {
-    warning("Final model could not be found, using all data to fit the model. ")
-    model_best <- model_all
-  }
-  model_best["call"] <- sprintf("Model with formula: %s", model_args[["formula"]])
-
-  inliers_df = data[sort(inliers), , drop = FALSE]
-  outliers_df = data[setdiff(ind, sort(inliers)), , drop = FALSE]
-  if(verbose) {
-    cat(sprintf("%s (%.1f%%) inliers out of %s total data points have been used. \n", length(inliers), length(inliers) / nrow(data) * 100, nrow(data)))
-  }
-  return(list(model = model_best, inliers = inliers_df, outliers = outliers_df))
+  # fit with full set
+  if ( nInliers > 0 ) {
+    finalFit = fitTransformToPairedPoints(   # step 5
+      movingPoints[ fullInliers, ],
+      fixedPoints[ fullInliers, ],
+      transformType = transformType, lambda = lambda )
+    } else {
+      finalFit = NULL
+      fullInliers = NULL
+    }
+  return( list( finalModel=finalFit, bestModel=bestModel, inliers = fullInliers ) )
 }

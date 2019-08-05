@@ -18,8 +18,11 @@ fitTransformToPairedPoints(movingPoints, fixedPoints,
 }
 \value{
 antsTransform that maps the moving image to the fixed image space.
-the inverse transform maps the moving points to the fixed space.
+the inverse transform maps the moving points to the fixed space. associated
+error is also returned.'
 }
 \description{
-Fit transform to points
+This function will use either the Kabsch algorithm or a least squares fitting
+algorithm to match the pairs of points that the user provides.  An antsr
+transform is returned.
 }

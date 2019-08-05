@@ -4,28 +4,37 @@
 \alias{RANSAC}
 \title{Random sample consensus (RANSAC)}
 \usage{
-RANSAC(data, y_col, model, model_args, n = 2, k = NA, t = NA,
-  d = NA, verbose = FALSE)
+RANSAC(fixedPoints, movingPoints, minNtoFit = 16, maxIterations = 20,
+  errorThreshold = 1, goodProportion = 0.5, lambda = 1e-04,
+  verbose = FALSE)
 }
 \arguments{
-\item{data}{dataframe with target column and model matrix columns}
+\item{fixedPoints}{fixed points matrix}
 
-\item{y_col}{name of target column}
+\item{movingPoints}{moving points matrix}
 
-\item{model}{model function to fit}
+\item{minNtoFit}{the minimum number of data values required to fit the model.
+this value will be used at each iteration to fit the subset model.}
 
-\item{model_args}{list, arguments to the model}
+\item{maxIterations}{the maximum number of iterations allowed in the algorithm}
 
-\item{n}{the minimum number of data values required to fit the model}
+\item{errorThreshold}{a threshold value for determining when a test data point fits a model.
+this parameter is set based on the standard deviation in the random subset model.
+that is, a point fits the model error distribution if it is within the bracket
+of values between mean error plus or minus sd error times errorThreshold.}
 
-\item{k}{the maximum number of iterations allowed in the algorithm}
+\item{goodProportion}{the fraction of close data values required to assert that a model
+fits well to data.  that is, if equal to 0.5, then one would need 50 points to
+assert that a model fit is good if the whole dataset contains 100 points.}
 
-\item{t}{a threshold value for determining when a data point fits a model}
+\item{lambda}{ridge penalty}
 
-\item{d}{the number of close data values required to assert that a model fits well to data}
+\item{verbose}{boolean}
+
+\item{transformType}{Affine, Rigid and Similarity currently supported}
 }
 \value{
-a list of output contains best fitted model, inliers, outliers
+output list contains best fitted model, inliers, outliers
 }
 \description{
 Random sample consensus (RANSAC)
