@@ -637,6 +637,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
 #' @return antsTransform that maps the moving image to the fixed image space.
 #' the inverse transform maps the moving points to the fixed space. associated
 #' error is also returned.'
+#' @export
 fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
   transformType = "Affine", lambda = 1e-4 ) {
     if ( ! any( transformType %in% c( "Rigid", "Affine", "Similarity") ) )
@@ -744,6 +745,7 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
 #'
 #' @return output list contains best fitted model, inliers, outliers
 #'
+#' @export
 RANSAC <- function(
   fixedPoints,
   movingPoints,

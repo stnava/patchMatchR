@@ -2,9 +2,11 @@
 
 export(MSE)
 export(PSNR)
+export(RANSAC)
 export(SSIM)
 export(deepFeatures)
 export(deepPatchMatch)
+export(fitTransformToPairedPoints)
 export(matchedPatches)
 export(patchMatch)
 importFrom(ANTsR,getCenterOfMass)
