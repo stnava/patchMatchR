@@ -4,14 +4,16 @@
 \alias{RANSAC}
 \title{Random sample consensus (RANSAC)}
 \usage{
-RANSAC(fixedPoints, movingPoints, minNtoFit = 16, maxIterations = 20,
-  errorThreshold = 1, goodProportion = 0.5, lambda = 1e-04,
-  verbose = FALSE)
+RANSAC(fixedPoints, movingPoints, transformType = "Affine",
+  minNtoFit = 16, maxIterations = 20, errorThreshold = 1,
+  goodProportion = 0.5, lambda = 1e-04, verbose = FALSE)
 }
 \arguments{
 \item{fixedPoints}{fixed points matrix}
 
 \item{movingPoints}{moving points matrix}
+
+\item{transformType}{Affine, Rigid and Similarity currently supported}
 
 \item{minNtoFit}{the minimum number of data values required to fit the model.
 this value will be used at each iteration to fit the subset model.}
@@ -30,8 +32,6 @@ assert that a model fit is good if the whole dataset contains 100 points.}
 \item{lambda}{ridge penalty}
 
 \item{verbose}{boolean}
-
-\item{transformType}{Affine, Rigid and Similarity currently supported}
 }
 \value{
 output list contains best fitted model, inliers, outliers

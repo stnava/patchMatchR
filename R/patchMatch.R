@@ -749,6 +749,7 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
 RANSAC <- function(
   fixedPoints,
   movingPoints,
+  transformType = "Affine",
   minNtoFit = 16,
   maxIterations = 20,
   errorThreshold = 1,
