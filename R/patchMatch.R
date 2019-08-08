@@ -777,7 +777,7 @@ RANSAC <- function(
       fixedPoints[ randSubset, ],
       transformType = transformType, lambda = lambda )
     mapComplement = applyAntsrTransformToPoint( modelFit$transform, fixedPoints )
-    err = sqrt( rowMeans( ( movingPoints - fixedPoints )^2 ) )
+    err = sqrt( rowMeans( ( movingPoints - mapComplement )^2 ) )
     mn1 = mean( err[ randSubset ] )
     sd1 = sd( err[ randSubset ] )
     meanInValBracket = mn1 + sd1 * c( -1, 1 ) * errorThreshold
