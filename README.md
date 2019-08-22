@@ -1,5 +1,5 @@
 # patchMatchR
-very basic patch matching functionality based on ANTsR -- see [documentation](https://github.com/stnava/patchMatchR/blob/master/index.html)
+very basic patch matching functionality based on ANTsR -- see [documentation](https://stnava.github.io/patchMatchR/)
 
 
 [![Build Status](https://travis-ci.org/stnava/patchMatchR.png?branch=master)](https://travis-ci.org/stnava/patchMatchR)
