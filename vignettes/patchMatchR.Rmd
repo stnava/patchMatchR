@@ -1,0 +1,87 @@
+---
+title: "*patchMatchR*: Patch-based matching and features for images in R"
+author: "Brian B. Avants"
+date: "`r Sys.Date()`"
+bibliography: REFERENCES.bib
+output: rmarkdown::html_vignette
+vignette: >
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteIndexEntry{Patch-based matching and features for images in R}
+    %\VignetteEncoding{UTF-8}
+    \usepackage[utf8]{inputenc}
+---
+
+```{r global options, include=FALSE}
+library(knitr)
+library(ANTsR)
+library( patchMatchR )
+```
+
+> "patch that hole."
+(folk wisdom)
+
+# Introduction
+
+Patch-based correspondence is ideal for finding partial matches between image pairs,
+for example, between pre and post-operative MRI.  Depending on the selected features,
+the matching may be robust to occlusion, noise, scale and rotation.  The patch-wise
+approach also makes the matching more robust to initialization in comparison to
+more traditional, gradient-based methods that assume that image pairs overlap (in
+physical space) at initialization and contain no more than a 30 degree rotational difference [@FIXME].
+Patch matching therefore provides a complementary set of tools in contrast to
+those provided by the majority of medical image registration tools.
+
+This package, *patchMatchR*, provides an experimental framework for efficiently
+computing patch-based features and patch-based matches between image pairs.
+*patchMatchR* uses transformation and physical space definitions that are
+consistent with the Insight ToolKit (ITK) and Advanced Normalization Tools (ANTs).
+The input/output of images and transformation files can be use seemlessly between
+this package, *ITKR* and *ANTsR*.
+
+The basic concepts include:
+
+* a "fixed" or "reference" image that defines the space to which we match;
+
+* a "moving" or "target" image that gets matched to the fixed space;
+
+* the moving to fixed transformation can be applied via `antsApplyTransforms` or
+with `applyAntsrTransform*`.  Both point sets and images are valid objects that
+can be transformed.
+
+* inverting the transform allows the fixed to be mapped to the moving space.
+
+* the patches over which we collect patch features are defined by masks.
+
+* the masks can be defined by random points or pre-defined reference points.
+
+* a reasonable set of points, for the brain, could be defined by the powers
+point set: `?powers_areal_mni_itk`.  the point set is defined in the MNI-ITK
+space.
+
+* randomly distributed point sets are reasonable in that they are unbiased and
+will ultimately be filtered later on.
+
+* the methods should work effectively in 2D or 3D but additional testing is needed.
+
+Many of the ideas in this work are inspired by traditional algorithms such as
+*patch match* and *SIFT* and newer approaches such as google's *DELF* [@FIXME].
+The latter is very similar to SIFT but uses deep features.  As this is a new
+package, little guidance is currently available for parameter setting.
+However, the number of parameters is also relatively small and, as such, parameter
+exploration is encouraged.
+
+# Alogrithms in *patchMatchR*
+
+Here, we provide an overview of the methods available within *patchMatchR*.
+
+* 
+
+# Example
+
+...
+
+# Summary
+
+Enjoy and please refer issues to [patchMatchR issues](https://github.com/stnava/patchMatchR/issues).
+
+# References
