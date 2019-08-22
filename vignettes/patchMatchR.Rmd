@@ -74,12 +74,12 @@ package, little guidance is currently available for parameter setting.
 However, the number of parameters is also relatively small and, as such, parameter
 exploration is encouraged.
 
-# Alogrithms in *patchMatchR*
+# Algorithms in *patchMatchR*
 
 The functions/methods available within *patchMatchR* include:
 
 * `patchMatch`: High-level function for patch matching that makes many assumptions
-     and therefore minimizes the number of parameters the user needs to
+     and therefore minimizes the number of parameters to
      choose. This prioritizes usability at the cost of optimality.
 
 * `matchedPatches`: provides the matched patches given output of `patchMatch`.
@@ -93,10 +93,9 @@ this is useful for visualizing the patch pairs.
      network.
 
 * `deepPatchMatch`: High-level function for deep patch matching that makes many
-     assumptions and therefore minimizes the number of parameters the
-     user needs to choose.
+     assumptions and therefore minimizes the number of parameters.
 
-* `RANSAC`: Random sample consensus is an established method [@FIXME] for identifying
+* `RANSAC`: Random sample consensus is an established method [@fischler1981random] for identifying
 a subset of points consistent with a rigid or affine transformation.
 
 The feature extraction and matching methods above will be much slower in three
@@ -128,7 +127,7 @@ makeNoise <- function( img, nzsd ) {
   antsCopyImageInfo( img, temp )
 }
 nz = makeNoise( img, 50 ) %>% smoothImage( 12 )
-nzt = thresholdImage( nz, 128, Inf )
+nzt = thresholdImage( nz, 127, Inf )
 imgc = imgr * nzt
 layout( matrix(1:2,nrow=1))
 plot( img, colorbar = FALSE   )
@@ -140,7 +139,7 @@ Now match the images.
 ```{r,message=FALSE,warning=FALSE}
 imgmask = randomMask( getMask( img ), 100 ) # may need more points than this
 mtch = patchMatch( imgc, img, imgmask, fixedPatchRadius = 7  )
-myMatches = matchedPatches( imgc, img, mtch, fixedPatchRadius = 7, verbose=F )
+myMatches = matchedPatches( imgc, img, mtch, fixedPatchRadius = 7, verbose=FALSE )
 k = which.min( mtch$MI ) # mutual information
 layout( matrix(1:2,nrow=1))
 plot( myMatches$fixPatchList[[k]], colorbar=F, doCropping=F )
@@ -159,7 +158,7 @@ rrr = RANSAC(
   data.matrix(mtch[,c(3,4)]),
   data.matrix(mtch[,c(7,8)]), minNtoFit = 16,
   transformType = 'Rigid',  errorThreshold = 0.6,
-  maxIterations = 2000, verbose=T, goodProportion = 1 )
+  maxIterations = 2000, verbose=FALSE, goodProportion = 1 )
 imgtx = applyAntsrTransformToImage(  rrr$bestModel$transform, imgc, img )
 antsImageMutualInformation( img, imgc )
 antsImageMutualInformation( img, imgtx )
@@ -194,7 +193,7 @@ img2 <- iMath( imgc, "Normalize" )
 mask = randomMask( getMask( img ), nP1 )
 mask2 = randomMask( getMask( img2 ), nP2 )
 match = deepPatchMatch(  img2, img, mask, mask2,
-  movingPatchSize = psz, fixedPatchSize = psz, verbose = TRUE,
+  movingPatchSize = psz, fixedPatchSize = psz, verbose = FALSE,
   block_name = 21 )
 wsel = which( !is.na( match$matches ) )
 layout( matrix(1:2,nrow=1, byrow=T) )
@@ -212,7 +211,7 @@ mpts = na.omit( match$mfeatures$patchCoords[ match$match, ] )
 result <- RANSAC(  fpts, mpts, transformType = 'Rigid',
   minNtoFit = 12, maxIterations = 2000,
   errorThreshold = 2, goodProportion = 1,
-  lambda = 1e-8, verbose = T )
+  lambda = 1e-8, verbose = FALSE )
 # visualize
 reg = applyAntsrTransformToImage( result$bestModel$transform, imgc, img )
 layout( matrix(1:2,nrow=1, byrow=T) )
