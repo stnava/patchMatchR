@@ -27,7 +27,7 @@ for example, between pre and post-operative MRI.  Depending on the selected feat
 the matching may be robust to occlusion, noise, scale and rotation.  The patch-wise
 approach also makes the matching more robust to initialization in comparison to
 more traditional, gradient-based methods that assume that image pairs overlap (in
-physical space) at initialization and contain no more than a 30 degree rotational difference [@FIXME].
+physical space) at initialization and contain no more than a 30 degree rotational difference [@johnson2015itk].
 Patch matching therefore provides a complementary set of tools in contrast to
 those provided by the majority of medical image registration tools.
 
@@ -35,7 +35,7 @@ This package, *patchMatchR*, provides an experimental framework for efficiently
 computing patch-based features and patch-based matches between image pairs.
 *patchMatchR* uses transformation and physical space definitions that are
 consistent with the Insight ToolKit (ITK) and Advanced Normalization Tools (ANTs).
-The input/output of images and transformation files can be use seemlessly between
+The input/output of images and transformation files can be used seamlessly between
 this package, *ITKR* and *ANTsR*.
 
 The basic concepts include:
@@ -68,7 +68,7 @@ image space, i.e. as bounding boxes.  this can be useful for applications such
 as super-resolution and/or image decomposition via PCA or related methods.
 
 Many of the ideas in this work are inspired by traditional algorithms such as
-*patch match* and *SIFT* and newer approaches such as google's *DELF* [@FIXME].
+*patch match* [@barnes2009patchmatch] and *SIFT* [@lowe2004distinctive] and newer approaches such as google's *DELF* [@noh2017large].
 The latter is very similar to SIFT but uses deep features.  As this is a new
 package, little guidance is currently available for parameter setting.
 However, the number of parameters is also relatively small and, as such, parameter
@@ -76,7 +76,7 @@ exploration is encouraged.
 
 # Alogrithms in *patchMatchR*
 
-Here, we provide an overview of the methods available within *patchMatchR*.
+The functions/methods available within *patchMatchR* include:
 
 * `patchMatch`: High-level function for patch matching that makes many assumptions
      and therefore minimizes the number of parameters the user needs to
@@ -106,9 +106,118 @@ dimensions.  As such, experimentation in 2D is encouraged.
 
 ## Partial matching
 
+Prepare the data.  A brain slice and a version of that slice rotated and corrupted.
+
+```{r,message=FALSE,warning=FALSE}
+library( ANTsR )
+img = ri( 1 )
+cos45 = cos(pi*15/180)
+sin45 = sin(pi*15/180)
+txRotate <- createAntsrTransform( precision="float", type="AffineTransform", dim=2 )
+setAntsrTransformParameters(txRotate, c(cos45,-sin45,sin45,cos45,0,0) )
+setAntsrTransformFixedParameters(txRotate, c(128,128))
+imgr = applyAntsrTransform(txRotate, img, img)
+plot( img, imgr, colorbar = FALSE, alpha =  0.5  )
+```
+
+Corrupt the image.
+
+```{r,message=FALSE,warning=FALSE}
+makeNoise <- function( img, nzsd ) {
+  temp = makeImage( dim( img ), rnorm( prod( dim( img ) ), 128, nzsd ) )
+  antsCopyImageInfo( img, temp )
+}
+nz = makeNoise( img, 50 ) %>% smoothImage( 12 )
+nzt = thresholdImage( nz, 128, Inf )
+imgc = imgr * nzt
+layout( matrix(1:2,nrow=1))
+plot( img, colorbar = FALSE   )
+plot( imgc, colorbar = FALSE   )
+```
+
+Now match the images.
+
+```{r,message=FALSE,warning=FALSE}
+imgmask = randomMask( getMask( img ), 5000 )
+mtch = patchMatch( imgc, img, imgmask, fixedPatchRadius = 7  )
+myMatches = matchedPatches( imgc, img, mtch, fixedPatchRadius = 7, verbose=F )
+k = which.min( mtch$MI ) # mutual information
+layout( matrix(1:2,nrow=1))
+plot( myMatches$fixPatchList[[k]], colorbar=F, doCropping=F )
+plot( myMatches$movPatchList[[k]], colorbar=F, doCropping=F )
+```
+
+Compute the transformation using RANSAC - *this implementation needs some work*
+
+```{r ransac,message=FALSE,warning=FALSE}
+# RANSAC(fixedPoints, movingPoints, transformType = "Affine",
+#  minNtoFit = 16, maxIterations = 20, errorThreshold = 1,
+#  goodProportion = 0.5, lambda = 1e-04, verbose = FALSE)
+rrr = RANSAC(
+  data.matrix(mtch[,c(3,4)]),
+  data.matrix(mtch[,c(7,8)]), minNtoFit = 16,
+  transformType = 'Rigid',  errorThreshold = 0.6,
+  maxIterations = 2000, verbose=T, goodProportion = 1 )
+imgtx = applyAntsrTransformToImage(  rrr$bestModel$transform, imgc, img )
+antsImageMutualInformation( img, imgc )
+antsImageMutualInformation( img, imgtx )
+layout( matrix(1:2,nrow=1))
+plot( img, imgc )
+plot( img, imgtx )
+```
+
 ## Deep features
 
+Pre-trained deep convolutional networks provide rich feature spaces for
+image matching.   Here, we show how to extract VGG19 features from medical images.
+
+```{r,message=FALSE,warning=FALSE}
+library( keras )
+library( abind )
+library( ANTsRNet )
+img <- ri( 1 ) %>% iMath( "Normalize" )
+mask = randomMask( getMask( img ), 20 )
+features = deepFeatures( img, mask, patchSize = 32 )
+pheatmap::pheatmap( abs( cor( t( features$features ) ) ) )
+```
+
 ## Deep feature matching
+
+```{r,message=FALSE,warning=FALSE}
+nP1 = 50
+nP2 = 200
+psz = 32
+img <- iMath( img, "Normalize" )
+img2 <- iMath( imgc, "Normalize" )
+mask = randomMask( getMask( img ), nP1 )
+mask2 = randomMask( getMask( img2 ), nP2 )
+match = deepPatchMatch(  img2, img, mask, mask2,
+  movingPatchSize = psz, fixedPatchSize = psz, verbose = TRUE,
+  block_name = 21 )
+wsel = which( !is.na( match$matches ) )
+layout( matrix(1:2,nrow=1, byrow=T) )
+ss=sample(wsel,1)
+plot( as.antsImage( match$ffeatures$patches[ss,,] ) , colorbar=F, doCropping=F )
+sss = match$matches[ss]
+plot( as.antsImage( match$mfeatures$patches[sss,,] ) , colorbar=F, doCropping=F  )
+```
+
+now follow up with a RANSAC
+
+```{r,message=FALSE,warning=FALSE}
+fpts = na.omit( match$ffeatures$patchCoords[ !is.na( match$matches ), ] )
+mpts = na.omit( match$mfeatures$patchCoords[ match$match, ] )
+result <- RANSAC(  fpts, mpts, transformType = 'Rigid',
+  minNtoFit = 12, maxIterations = 2000,
+  errorThreshold = 2, goodProportion = 1,
+  lambda = 1e-8, verbose = T )
+# visualize
+reg = applyAntsrTransformToImage( result$bestModel$transform, imgc, img )
+layout( matrix(1:2,nrow=1, byrow=T) )
+plot( img, colorbar = F  )
+plot( reg, colorbar = F   )
+
+```
 
 # Summary
 

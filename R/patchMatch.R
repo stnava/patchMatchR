@@ -769,7 +769,8 @@ RANSAC <- function(
   nIterations = 0
   bestModel = NULL
   bestErr = Inf
-  while ( nInliers < d & nIterations < maxIterations ) {
+#  while ( nInliers < d & nIterations < maxIterations ) {
+  while ( nIterations < maxIterations ) {
     nIterations = nIterations + 1
     randSubset = sample( 1:nMax, minNtoFit )         # step 1
     modelFit = fitTransformToPairedPoints(   # step 2
@@ -782,8 +783,7 @@ RANSAC <- function(
     sd1 = sd( err[ randSubset ] )
     meanInValBracket = mn1 + sd1 * c( -1, 1 ) * errorThreshold
     inliers = which( err > meanInValBracket[1] & err < meanInValBracket[2] )
-    if ( modelFit$err < bestErr & length( inliers ) > nInliers &
-      length( inliers ) > minNtoFit ) {
+    if ( modelFit$err < bestErr & length( inliers ) > minNtoFit  ) {
       bestErr = modelFit$err
       bestModel = modelFit
       fullInliers = inliers
@@ -803,5 +803,9 @@ RANSAC <- function(
       finalFit = NULL
       fullInliers = NULL
     }
-  return( list( finalModel=finalFit, bestModel=bestModel, inliers = fullInliers ) )
+  return(
+    list(
+      finalModel=finalFit,
+      bestModel=bestModel,
+      inliers = fullInliers ) )
 }
