@@ -63,6 +63,10 @@ will ultimately be filtered later on.
 
 * the methods should work effectively in 2D or 3D but additional testing is needed.
 
+* one advantage of the matched patches is that they can be stored in the original
+image space, i.e. as bounding boxes.  this can be useful for applications such
+as super-resolution and/or image decomposition via PCA or related methods.
+
 Many of the ideas in this work are inspired by traditional algorithms such as
 *patch match* and *SIFT* and newer approaches such as google's *DELF* [@FIXME].
 The latter is very similar to SIFT but uses deep features.  As this is a new
@@ -74,14 +78,43 @@ exploration is encouraged.
 
 Here, we provide an overview of the methods available within *patchMatchR*.
 
-* 
+* `patchMatch`: High-level function for patch matching that makes many assumptions
+     and therefore minimizes the number of parameters the user needs to
+     choose. This prioritizes usability at the cost of optimality.
 
-# Example
+* `matchedPatches`: provides the matched patches given output of `patchMatch`.
+this is useful for visualizing the patch pairs.
 
-...
+* `fitTransformToPairedPoints`: will use either the Kabsch algorithm or a least
+     squares fitting algorithm to match the pairs of points that the
+     user provides.
+
+* `deepFeatures`: High-level function for extracting features based on a pretrained
+     network.
+
+* `deepPatchMatch`: High-level function for deep patch matching that makes many
+     assumptions and therefore minimizes the number of parameters the
+     user needs to choose.
+
+* `RANSAC`: Random sample consensus is an established method [@FIXME] for identifying
+a subset of points consistent with a rigid or affine transformation.
+
+The feature extraction and matching methods above will be much slower in three
+dimensions.  As such, experimentation in 2D is encouraged.
+
+# Examples
+
+## Partial matching
+
+## Deep features
+
+## Deep feature matching
 
 # Summary
 
-Enjoy and please refer issues to [patchMatchR issues](https://github.com/stnava/patchMatchR/issues).
+We certainly expect some bugs or usability issues to arise and these can only
+be improved if we get feedback and/or suggestions from those who have interest
+in these methods. Enjoy and please refer issues or suggestions to [patchMatchR issues](https://github.com/stnava/patchMatchR/issues).
+
 
 # References
