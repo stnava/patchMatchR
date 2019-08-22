@@ -138,7 +138,7 @@ plot( imgc, colorbar = FALSE   )
 Now match the images.
 
 ```{r,message=FALSE,warning=FALSE}
-imgmask = randomMask( getMask( img ), 5000 )
+imgmask = randomMask( getMask( img ), 100 ) # may need more points than this
 mtch = patchMatch( imgc, img, imgmask, fixedPatchRadius = 7  )
 myMatches = matchedPatches( imgc, img, mtch, fixedPatchRadius = 7, verbose=F )
 k = which.min( mtch$MI ) # mutual information
@@ -147,7 +147,9 @@ plot( myMatches$fixPatchList[[k]], colorbar=F, doCropping=F )
 plot( myMatches$movPatchList[[k]], colorbar=F, doCropping=F )
 ```
 
-Compute the transformation using RANSAC - *this implementation needs some work*
+Compute the transformation using RANSAC - *this implementation needs some work
+in terms of identifying optimal parameters or potentially through an automated
+parameter search that is internal to the method*
 
 ```{r ransac,message=FALSE,warning=FALSE}
 # RANSAC(fixedPoints, movingPoints, transformType = "Affine",
