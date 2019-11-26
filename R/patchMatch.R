@@ -825,7 +825,17 @@ RANSAC <- function(
 #' @export
 #' @examples
 #' \dontrun{
-#' mlm = matchedLandmarks( match, img, img2, c(psz,psz) )
+#' library( keras )
+#' library( ANTsR )
+#' nP1 = 5
+#' nP2 = 20
+#' psz = 32
+#' img <- ri( 1 ) %>% iMath( "Normalize" )
+#' img2 <- ri( 2 ) %>% iMath( "Normalize" )
+#' mask = randomMask( getMask( img ), nP1 )
+#' mask2 = randomMask( getMask( img2 ), nP2 )
+#' matchO = deepPatchMatch( img2, img, mask, mask2 )
+#' mlm = matchedLandmarks( matchO, img, img2, c(psz,psz) )
 #' ct = 0
 #' mxct = 18
 #' lmImage1 = img * 0
