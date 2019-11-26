@@ -21,3 +21,24 @@ output list contains fixed and matched points
 \description{
 Convert match output to landmarks in physical space
 }
+\examples{
+\dontrun{
+mlm = matchedLandmarks( match, img, img2, c(psz,psz) )
+ct = 0
+mxct = 18
+lmImage1 = img * 0
+lmImage2 = img2 * 0
+for ( k in 1:nrow( mlm$fixedPoints ) ) {
+  if ( ct < mxct ) {
+    pt1i = makePointsImage( matrix(mlm$fixedPoints[k,],ncol=2), img, radius = 2 ) * k
+    pt2i = makePointsImage( matrix(mlm$movingPoints[k,],ncol=2), img2, radius = 2 ) * k
+    lmImage1 = lmImage1 + pt1i
+    lmImage2 = lmImage2 + pt2i
+    }
+  ct = ct + 1
+ }
+
+plot( img, lmImage1 )
+plot( img2, lmImage2 )
+}
+}

@@ -809,3 +809,68 @@ RANSAC <- function(
       bestModel=bestModel,
       inliers = fullInliers ) )
 }
+
+
+
+
+
+#' Convert match output to landmarks in physical space
+#'
+#' @param match object, the output of \code{deepPatchMatch}
+#' @param referenceImage the fixed image
+#' @param movingImage the image that will be matched to the fixed image
+#' @param patch size of patch features
+#' @return output list contains fixed and matched points
+#'
+#' @export
+#' @examples
+#' \dontrun{
+#' mlm = matchedLandmarks( match, img, img2, c(psz,psz) )
+#' ct = 0
+#' mxct = 18
+#' lmImage1 = img * 0
+#' lmImage2 = img2 * 0
+#' for ( k in 1:nrow( mlm$fixedPoints ) ) {
+#'   if ( ct < mxct ) {
+#'     pt1i = makePointsImage( matrix(mlm$fixedPoints[k,],ncol=2), img, radius = 2 ) * k
+#'     pt2i = makePointsImage( matrix(mlm$movingPoints[k,],ncol=2), img2, radius = 2 ) * k
+#'     lmImage1 = lmImage1 + pt1i
+#'     lmImage2 = lmImage2 + pt2i
+#'     }
+#'   ct = ct + 1
+#'  }
+#'
+#' plot( img, lmImage1 )
+#' plot( img2, lmImage2 )
+#' }
+matchedLandmarks <- function(
+  matchObject,
+  referenceImage,
+  movingImage,
+  patchSize
+) {
+fixPoints = matrix( nrow = nrow( matchObject$matches ),
+  ncol =  referenceImage@dimension )
+matchedPoints = matrix( nrow = nrow( matchObject$matches ),
+  ncol =  referenceImage@dimension )
+off = patchSize / 2
+for ( k in 1:nrow( matchObject$matches ) ) {
+  fpt =  matchObject$ffeatures$patchCoords[k,] + off
+  pt1phys = antsTransformIndexToPhysicalPoint( referenceImage, fpt )
+  fixPoints[k,] = pt1phys
+  if ( ! is.na( matchObject$matches[k,1] ) ) {
+#    pt1i = makePointsImage( pt1phys, img, radius = 2 ) * k
+    fpt2 = matchObject$mfeatures$patchCoords[matchObject$matches[k,1],] + off
+    pt2phys = antsTransformIndexToPhysicalPoint( movingImage, fpt2 )
+    matchedPoints[k,] = pt2phys
+#    pt2i = makePointsImage( pt2phys, img2, radius = 2 ) * k
+#      lmImage1 = lmImage1 + pt1i
+#      lmImage2 = lmImage2 + pt2i
+#      print( paste( ct, k ) )
+#      locimg1 = as.antsImage( matchObject$ffeatures$patches[k,,] )+127.5
+#      locimg2 = as.antsImage(matchObject$mfeatures$patches[matchObject$matches[k,1],,])+127.5
+    }
+  }
+nna=!is.na( matchedPoints[,1] )
+return( list( fixedPoints=fixPoints[nna,], movingPoints=matchedPoints[nna,] ) )
+}
