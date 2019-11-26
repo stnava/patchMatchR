@@ -25,11 +25,12 @@ Convert match output to landmarks in physical space
 \dontrun{
 library( keras )
 library( ANTsR )
-nP1 = 5
-nP2 = 20
+layout( matrix(1:2,nrow=1) )
+nP1 = 50
+nP2 = 200
 psz = 32
-img <- ri( 1 ) \%>\% iMath( "Normalize" )
-img2 <- ri( 2 ) \%>\% iMath( "Normalize" )
+img <- ri( 1 ) \%>\% iMath( "Normalize" )  \%>\% resampleImage( c( 2, 2 ) )
+img2 <- ri( 2 ) \%>\% iMath( "Normalize" )  \%>\% resampleImage( c( 2, 2 ) )
 mask = randomMask( getMask( img ), nP1 )
 mask2 = randomMask( getMask( img2 ), nP2 )
 matchO = deepPatchMatch( img2, img, mask, mask2 )
