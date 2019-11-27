@@ -475,14 +475,17 @@ deepPatchMatch <- function(
       featureSubset = featureSubset, block_name = block_name  )
   }
   if ( verbose ) print("sdxy-begin")
+#  mydist = sparseDistanceMatrixXY(
+#    t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
   mydist = sparseDistanceMatrixXY(
-    t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
+    t(mfeatures$features), t(ffeatures$features), k = knn, kmetric='euclidean')
   if ( verbose ) print("sdxy-fin")
   matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
-  best1s = qlcMatrix::colMin( mydist, which = TRUE  )
-  for ( k in 1:ncol(best1s$which) ) {
-    ww = which( best1s$which[,k] )
+#  best1s = qlcMatrix::colMin( mydist, which = TRUE  )
+  best1s = qlcMatrix::rowMin( mydist, which = TRUE  )
+  for ( k in 1:nrow(best1s$which) ) {
+    ww = which( best1s$which[k,] )
     if ( length( ww ) > 0 ) {
       matches[ k, ] = ww
       costs[k, ] = as.numeric( best1s$min[k] )
@@ -491,6 +494,7 @@ deepPatchMatch <- function(
   return(
     list(
       distanceMatrix = mydist,
+#      distanceMatrix2 = mydist2,
       ffeatures = ffeatures,
       mfeatures = mfeatures,
       matches = matches,
