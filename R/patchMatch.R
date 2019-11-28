@@ -392,6 +392,7 @@ matchedPatches <- function(
 #' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
+#' @param switchMatchDirection boolean
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -458,6 +459,7 @@ deepPatchMatch <- function(
   knn = 1,
   featureSubset,
   block_name = 'block2_conv2',
+  switchMatchDirection = FALSE,
   verbose = FALSE ) {
   if ( missing( featureSubset ) ) {
     if ( verbose ) print("DF1")
@@ -475,22 +477,36 @@ deepPatchMatch <- function(
       featureSubset = featureSubset, block_name = block_name  )
   }
   if ( verbose ) print("sdxy-begin")
-#  mydist = sparseDistanceMatrixXY(
-#    t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
-  mydist = sparseDistanceMatrixXY(
-    t(mfeatures$features), t(ffeatures$features), k = knn, kmetric='euclidean')
-  if ( verbose ) print("sdxy-fin")
   matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
-#  best1s = qlcMatrix::colMin( mydist, which = TRUE  )
-  best1s = qlcMatrix::rowMin( mydist, which = TRUE  )
-  for ( k in 1:nrow(best1s$which) ) {
-    ww = which( best1s$which[k,] )
-    if ( length( ww ) > 0 ) {
-      matches[ k, ] = ww
-      costs[k, ] = as.numeric( best1s$min[k] )
+  if ( switchMatchDirection ) {
+    mydist = sparseDistanceMatrixXY(
+      t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
+    best1s = qlcMatrix::colMin( mydist, which = TRUE  )
+    for ( k in 1:ncol(best1s$which) ) {
+      ww = which( best1s$which[,k] )
+      if ( length( ww ) > 0 ) {
+        matches[ k, ] = ww
+        costs[k, ] = as.numeric( best1s$min[k] )
+      }
     }
-  }
+  } else {
+    mydist = sparseDistanceMatrixXY(
+      t(mfeatures$features), t(ffeatures$features), k = knn, kmetric='euclidean')
+    best1s = qlcMatrix::rowMin( mydist, which = TRUE  )
+    for ( k in 1:nrow(best1s$which) ) {
+      ww = which( best1s$which[k,] )
+      if ( length( ww ) > 0 ) {
+        matches[ k, ] = ww
+        costs[k, ] = as.numeric( best1s$min[k] )
+      } # length
+    } # row
+  } # else
+  if ( verbose ) print("sdxy-fin")
+  if ( knn > 1 ) {
+    # if knn > 0 => make probabilities
+    # (exp( -1.0 * (vv-min(vv))^2/ (mean(vv)*9) ))
+    }
   return(
     list(
       distanceMatrix = mydist,

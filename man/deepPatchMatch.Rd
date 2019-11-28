@@ -6,7 +6,8 @@
 \usage{
 deepPatchMatch(movingImage, fixedImage, movingImageMask, fixedImageMask,
   movingPatchSize = 32, fixedPatchSize = 32, knn = 1, featureSubset,
-  block_name = "block2_conv2", verbose = FALSE)
+  block_name = "block2_conv2", switchMatchDirection = FALSE,
+  verbose = FALSE)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are
@@ -28,6 +29,8 @@ transformed to the space of the fixed image}
 
 \item{block_name}{name of vgg feature block, either block2_conv2 or integer.
 use the former for smaller patch sizes.}
+
+\item{switchMatchDirection}{boolean}
 
 \item{verbose}{boolean}
 }
