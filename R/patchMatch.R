@@ -391,7 +391,9 @@ matchedPatches <- function(
 #' @param knn k-nearest neighbors ( should be >= 1  )
 #' @param knnSpatial k-nearest neighbors for spatial localization (optional).
 #' this will constrain the search to more proximal locations.  will perform
-#' better if the images are in the same physical space.
+#' better if the images are in the same physical space. FIXME - allow a
+#' transformation to be passed to this step s.t. moving points can be
+#' transformed to fixed space before distance assessment.
 #' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
