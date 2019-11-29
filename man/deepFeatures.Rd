@@ -2,10 +2,10 @@
 % Please edit documentation in R/patchMatch.R
 \name{deepFeatures}
 \alias{deepFeatures}
-\title{patch match two images with deep features}
+\title{extract deep features from 2D or 3D image}
 \usage{
 deepFeatures(x, mask, patchSize = 64, featureSubset,
-  block_name = "block2_conv2")
+  block_name = "block2_conv2", vggmodel)
 }
 \arguments{
 \item{x}{input input image}
@@ -18,6 +18,8 @@ deepFeatures(x, mask, patchSize = 64, featureSubset,
 
 \item{block_name}{name of vgg feature block, either block2_conv2 or integer.
 use the former for smaller patch sizes.}
+
+\item{vggmodel}{prebuilt feature model}
 }
 \value{
 feature array, patches and patch coordinates

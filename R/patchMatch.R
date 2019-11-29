@@ -388,11 +388,12 @@ matchedPatches <- function(
 #' @param fixedImageMask defines the object of interest in the fixedImage
 #' @param movingPatchSize integer greater than or equal to 32.
 #' @param fixedPatchSize integer greater than or equal to 32.
-#' @param knn k-nearest neighbors ( should be 1, for now )
+#' @param knn k-nearest neighbors ( should be >= 1  )
 #' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
 #' @param switchMatchDirection boolean
+#' @param kPackage name of package to use for knn
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -460,7 +461,9 @@ deepPatchMatch <- function(
   featureSubset,
   block_name = 'block2_conv2',
   switchMatchDirection = FALSE,
-  verbose = FALSE ) {
+  kPackage = 'FNN',
+  verbose = FALSE )
+{
   if ( missing( featureSubset ) ) {
     if ( verbose ) print("DF1")
     ffeatures = deepFeatures( fixedImage, fixedImageMask,
@@ -476,28 +479,42 @@ deepPatchMatch <- function(
     mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
       featureSubset = featureSubset, block_name = block_name  )
   }
+  if ( FALSE ) {
+    if ( verbose ) print("spatial-distance-begin")
+    fdistmat <- getNeighborhoodInMask(image = fixedImage, mask = fixedImageMask,
+      radius = c(0,0), physical.coordinates=TRUE, spatial.info=TRUE )
+    mdistmat <- getNeighborhoodInMask(image = movingImage, mask = movingImageMask,
+      radius = c(0,0), physical.coordinates=TRUE, spatial.info=TRUE )
+    if ( !switchMatchDirection ) spatialDistMat = sparseDistanceMatrixXY(
+      t(mdistmat$indices), t(fdistmat$indices), k = knndist, kmetric='euclidean')
+    if ( switchMatchDirection ) spatialDistMat = sparseDistanceMatrixXY(
+      t(fdistmat$indices), t(mdistmat$indices), k = knndist, kmetric='euclidean')
+    if ( verbose ) print("spatial-distance-end")
+  }
   if ( verbose ) print("sdxy-begin")
   matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   if ( switchMatchDirection ) {
     mydist = sparseDistanceMatrixXY(
-      t(ffeatures$features), t(mfeatures$features), k = knn, kmetric='euclidean')
+      t(ffeatures$features), t(mfeatures$features), k = knn,
+      kmetric='euclidean', kPackage = kPackage )
     best1s = qlcMatrix::colMin( mydist, which = TRUE  )
     for ( k in 1:ncol(best1s$which) ) {
       ww = which( best1s$which[,k] )
       if ( length( ww ) > 0 ) {
-        matches[ k, ] = ww
+        matches[ k, ] = ww[1]
         costs[k, ] = as.numeric( best1s$min[k] )
       }
     }
   } else {
     mydist = sparseDistanceMatrixXY(
-      t(mfeatures$features), t(ffeatures$features), k = knn, kmetric='euclidean')
+      t(mfeatures$features), t(ffeatures$features), k = knn,
+      kmetric='euclidean', kPackage = kPackage )
     best1s = qlcMatrix::rowMin( mydist, which = TRUE  )
     for ( k in 1:nrow(best1s$which) ) {
       ww = which( best1s$which[k,] )
       if ( length( ww ) > 0 ) {
-        matches[ k, ] = ww
+        matches[ k, ] = ww[1]
         costs[k, ] = as.numeric( best1s$min[k] )
       } # length
     } # row
@@ -510,7 +527,6 @@ deepPatchMatch <- function(
   return(
     list(
       distanceMatrix = mydist,
-#      distanceMatrix2 = mydist2,
       ffeatures = ffeatures,
       mfeatures = mfeatures,
       matches = matches,
@@ -519,7 +535,109 @@ deepPatchMatch <- function(
 }
 
 
-#' patch match two images with deep features
+
+
+#' locally constrained deep feature patch matching
+#'
+#' High-level function for deep patch matching constrained to be local.
+#'
+#' @param movingImage input image from which we extract patches that are
+#' transformed to the space of the fixed image
+#' @param fixedImage input image that provides the fixed reference domain.
+#' @param movingImageMask defines the object of interest in the movingImage
+#' @param fixedImageMask defines the object of interest in the fixedImage
+#' @param movingPatchSize integer greater than or equal to 32.
+#' @param fixedPatchSize integer greater than or equal to 32.
+#' @param knn k-nearest neighbors ( should be >= 1  )
+#' @param localSearchRadius radius value passed to \code{makePointsImage}
+#' @param nSamples number of local samples (optional), can speed things up at
+#' the cost of some accuracy
+#' @param block_name name of vgg feature block, either block2_conv2 or integer.
+#' use the former for smaller patch sizes.
+#' @param kPackage name of package to use for knn
+#' @param verbose boolean
+#' @return correspondence data
+#' @author Avants BB
+#' @examples
+#'
+#' library( keras )
+#' library( ANTsR )
+#' nP1 = 5
+#' nP2 = 20
+#' psz = 32
+#' img <- ri( 1 ) %>% iMath( "Normalize" )
+#' img2 <- ri( 2 ) %>% iMath( "Normalize" )
+#' mask = randomMask( getMask( img ), nP1 )
+#' mask2 = randomMask( getMask( img2 ), nP2 )
+#' match = deepLocalPatchMatch( img2, img, mask, mask2 )
+#'
+#' @export deepLocalPatchMatch
+deepLocalPatchMatch <- function(
+  movingImage,
+  fixedImage,
+  movingImageMask,
+  fixedImageMask,
+  patchSize = 32,
+  knn = 1,
+  localSearchRadius = 5,
+  nSamples,
+  block_name = 'block2_conv2',
+  kPackage = 'FNN',
+  verbose = FALSE )
+{
+  ffeatures = deepFeatures( fixedImage, fixedImageMask,
+      patchSize = patchSize, block_name = block_name  )
+  featureModel = ffeatures$featureModel
+  # create a point mask for local regions
+  createPointMask <- function( ptPhys, referenceMask, radius, nsamples ) {
+    if ( ! missing( nsamples ) ) {
+      makePointsImage( matrix( ptPhys, nrow = 1 ), referenceMask,
+        radius=radius ) %>% randomMask( nsamples )
+      } else makePointsImage( matrix( ptPhys, nrow = 1 ), referenceMask,
+        radius=radius )
+  }
+
+  if ( verbose ) print("local-match-begin")
+  matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
+  costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
+  matchedCoords = fixedCoords = ffeatures$patchCoords
+  fixedCoords[ ] = matchedCoords[ ] = NA
+  for ( i in 1:nrow( ffeatures$patches  ) ) {
+    cat(paste(i,'...'))
+    off = patchSize / 2
+    fpt = ffeatures$patchCoords[i, ] + off
+    ptPhys = antsTransformIndexToPhysicalPoint( fixedImageMask, fpt )
+    fixedCoords[i,] = ptPhys
+    if ( missing( nSamples ) )
+      localMask = createPointMask( ptPhys, movingImageMask, localSearchRadius )
+    else localMask = createPointMask( ptPhys, movingImageMask, localSearchRadius,
+      nSamples )
+    mfeatures = deepFeatures( movingImage, localMask,
+      patchSize = patchSize, block_name = block_name, vggmodel = featureModel)
+    mydist = sparseDistanceMatrixXY(
+      t(mfeatures$features), matrix( t(ffeatures$features[i,]),ncol=1),
+      k = knn, kmetric='euclidean')
+    best1s = qlcMatrix::rowMin( mydist, which = TRUE  )
+    ww = which( best1s$which[1,] )
+    if ( length( ww ) > 0 ) {
+      matches[ i, ] = ww[1]
+      costs[i, ] = as.numeric( best1s$min[1] )
+      mpt = mfeatures$patchCoords[ww[1],] + off
+      matchedCoords[i, ] = antsTransformIndexToPhysicalPoint( fixedImageMask, mpt )
+      } # length( ww )
+    } # row
+  if ( verbose ) print("local-match-fin")
+  return(
+    list(
+      fixedPoints = fixedCoords,
+      movingPoints = matchedCoords,
+      matches = matches,
+      costs = costs )
+   )
+}
+
+
+#' extract deep features from 2D or 3D image
 #'
 #' High-level function for extracting features based on a pretrained network.
 #'
@@ -529,6 +647,7 @@ deepPatchMatch <- function(
 #' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
+#' @param vggmodel prebuilt feature model
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
@@ -540,87 +659,89 @@ deepPatchMatch <- function(
 #'
 #' @export deepFeatures
 deepFeatures <- function( x, mask, patchSize = 64,
-  featureSubset, block_name = 'block2_conv2' ) {
+  featureSubset, block_name = 'block2_conv2', vggmodel ) {
   idim = x@dimension
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
   if ( any( patchSize < 32 ) ) vggp = rep( 32, 2 )
-  if ( idim == 2 ) {
-    if ( block_name == 'block2_conv2' ) {
-      vggmodel = createVggModel2D( c( patchSize, 3 ), numberOfClassificationLabels = 1000,
-        layers = c( 1, 2, 3 ), lowestResolution = 64,
-        convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
-        strides = c(2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-        style = 19, mode = "classification")
-      vggmodel <- keras_model( inputs = vggmodel$input,
-        outputs = get_layer(vggmodel, index = 6 )$output)
-    } else {
-    lays = c(1, 2, 3, 4, 4 )
-    if ( block_name <= 6 ) lays = c( 1, 2, 3 )
-    vggmodel = createVggModel2D( c( patchSize, 3 ), numberOfClassificationLabels = 1000,
-         layers = lays, lowestResolution = 64,
-         convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
-         strides = c(2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-         style = 19, mode = "classification")
-    vggmodel <- keras_model( inputs = vggmodel$input,
-      outputs = get_layer(vggmodel, index = block_name )$output)
-    }
-    vgg19 = application_vgg19(
-        include_top = FALSE, weights = "imagenet",
-        input_shape = c( vggp, 3 ),
-        classes = 1000)
-    if ( block_name == 'block2_conv2' )
-      vggmodelRaw <- keras_model( inputs = vgg19$input,
-            outputs = get_layer(vgg19, block_name )$output)
-    if ( is.numeric( block_name ) ) {
-      vggmodelRaw <- keras_model( inputs = vgg19$input,
-            outputs = get_layer(vgg19, index = block_name + 1 )$output)
-    }
-    set_weights( vggmodel, get_weights( vggmodelRaw ) )
-  }
-  if ( idim == 3 ) {
-    vgg19 = application_vgg19(
-      include_top = FALSE, weights = "imagenet",
-      input_shape = c( vggp[1], vggp[2], 3 ),
-      classes = 1000)
-    if ( block_name == 'block2_conv2' )
-      vggmodel2D <- keras_model( inputs = vgg19$input,
-        outputs = get_layer(vgg19, block_name )$output)
-    if ( is.numeric( block_name ) )
-      vggmodel2D <- keras_model( inputs = vgg19$input,
-        outputs = get_layer(vgg19, index = block_name + 1 )$output)
-    ######################################################################################
-    nchan = 1
-    if ( block_name == 'block2_conv2' ) {
-      vggmodel = createVggModel3D( c( patchSize, 1 ), numberOfClassificationLabels = 1000,
-        layers = c( 1, 2, 3 ), lowestResolution = 64,
-        convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
-        strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-        style = 19, mode = "classification")
-      vggmodel <- keras_model( inputs = vggmodel$input,
-        outputs = get_layer(vggmodel, index = 6 )$output)
-    } else {
+  if ( missing( vggmodel ) ) {
+    if ( idim == 2 ) {
+      if ( block_name == 'block2_conv2' ) {
+        vggmodel = createVggModel2D( c( patchSize, 3 ), numberOfClassificationLabels = 1000,
+          layers = c( 1, 2, 3 ), lowestResolution = 64,
+          convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
+          strides = c(2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
+          style = 19, mode = "classification")
+        vggmodel <- keras_model( inputs = vggmodel$input,
+          outputs = get_layer(vggmodel, index = 6 )$output)
+      } else {
       lays = c(1, 2, 3, 4, 4 )
       if ( block_name <= 6 ) lays = c( 1, 2, 3 )
-      vggmodel = createVggModel3D( c( patchSize, nchan ), numberOfClassificationLabels = 1000,
-         layers = lays, lowestResolution = 64,
-         convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
-         strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-         style = 19, mode = "classification")
+      vggmodel = createVggModel2D( c( patchSize, 3 ), numberOfClassificationLabels = 1000,
+           layers = lays, lowestResolution = 64,
+           convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
+           strides = c(2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
+           style = 19, mode = "classification")
       vggmodel <- keras_model( inputs = vggmodel$input,
         outputs = get_layer(vggmodel, index = block_name )$output)
+      }
+      vgg19 = application_vgg19(
+          include_top = FALSE, weights = "imagenet",
+          input_shape = c( vggp, 3 ),
+          classes = 1000)
+      if ( block_name == 'block2_conv2' )
+        vggmodelRaw <- keras_model( inputs = vgg19$input,
+              outputs = get_layer(vgg19, block_name )$output)
+      if ( is.numeric( block_name ) ) {
+        vggmodelRaw <- keras_model( inputs = vgg19$input,
+              outputs = get_layer(vgg19, index = block_name + 1 )$output)
+      }
+      set_weights( vggmodel, get_weights( vggmodelRaw ) )
     }
-    vgg3Dweights = get_weights( vggmodel )
-    vgg2Dweights = get_weights( vggmodel2D )
-    for ( j in 1:nchan )
-      vgg3Dweights[[1]][ , , , j , ] = vgg2Dweights[[1]] / nchan
-    for ( k in seq( from=2, length( vgg3Dweights ), by=2 ) )
-      vgg3Dweights[[k]] = vgg2Dweights[[k]]
-    for ( k in seq( from=3, length( vgg3Dweights )-1, by=2 ) )
-      for ( j in 1:idim )
-        vgg3Dweights[[k]][ , , j, , ] = vgg2Dweights[[k]] / idim
-    set_weights( vggmodel, vgg3Dweights )
-  }
+    if ( idim == 3 ) {
+      vgg19 = application_vgg19(
+        include_top = FALSE, weights = "imagenet",
+        input_shape = c( vggp[1], vggp[2], 3 ),
+        classes = 1000)
+      if ( block_name == 'block2_conv2' )
+        vggmodel2D <- keras_model( inputs = vgg19$input,
+          outputs = get_layer(vgg19, block_name )$output)
+      if ( is.numeric( block_name ) )
+        vggmodel2D <- keras_model( inputs = vgg19$input,
+          outputs = get_layer(vgg19, index = block_name + 1 )$output)
+      ######################################################################################
+      nchan = 1
+      if ( block_name == 'block2_conv2' ) {
+        vggmodel = createVggModel3D( c( patchSize, 1 ), numberOfClassificationLabels = 1000,
+          layers = c( 1, 2, 3 ), lowestResolution = 64,
+          convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
+          strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
+          style = 19, mode = "classification")
+        vggmodel <- keras_model( inputs = vggmodel$input,
+          outputs = get_layer(vggmodel, index = 6 )$output)
+      } else {
+        lays = c(1, 2, 3, 4, 4 )
+        if ( block_name <= 6 ) lays = c( 1, 2, 3 )
+        vggmodel = createVggModel3D( c( patchSize, nchan ), numberOfClassificationLabels = 1000,
+           layers = lays, lowestResolution = 64,
+           convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
+           strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
+           style = 19, mode = "classification")
+        vggmodel <- keras_model( inputs = vggmodel$input,
+          outputs = get_layer(vggmodel, index = block_name )$output)
+      }
+      vgg3Dweights = get_weights( vggmodel )
+      vgg2Dweights = get_weights( vggmodel2D )
+      for ( j in 1:nchan )
+        vgg3Dweights[[1]][ , , , j , ] = vgg2Dweights[[1]] / nchan
+      for ( k in seq( from=2, length( vgg3Dweights ), by=2 ) )
+        vgg3Dweights[[k]] = vgg2Dweights[[k]]
+      for ( k in seq( from=3, length( vgg3Dweights )-1, by=2 ) )
+        for ( j in 1:idim )
+          vgg3Dweights[[k]][ , , j, , ] = vgg2Dweights[[k]] / idim
+      set_weights( vggmodel, vgg3Dweights )
+    }
+  } # exists vggmodel
   x = iMath( x, "Normalize" ) * 255 - 127.5
   patches0 = extractImagePatches( x, patchSize, maskImage = mask,
     maxNumberOfPatches=sum(mask), returnAsArray = T, randomSeed = 1 )
@@ -641,7 +762,12 @@ deepFeatures <- function( x, mask, patchSize = 64,
   features = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
   if ( ! missing( featureSubset ) )
     features = features[,featureSubset]
-  return( list( features=features, patches=patches0, patchCoords = patchCoords ) )
+  return(
+    list(
+      features=features,
+      patches=patches0,
+      patchCoords = patchCoords,
+      featureModel = vggmodel ) )
 }
 
 #' Fit transform to points

@@ -7,7 +7,7 @@
 deepPatchMatch(movingImage, fixedImage, movingImageMask, fixedImageMask,
   movingPatchSize = 32, fixedPatchSize = 32, knn = 1, featureSubset,
   block_name = "block2_conv2", switchMatchDirection = FALSE,
-  verbose = FALSE)
+  kPackage = "FNN", verbose = FALSE)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are
@@ -23,7 +23,7 @@ transformed to the space of the fixed image}
 
 \item{fixedPatchSize}{integer greater than or equal to 32.}
 
-\item{knn}{k-nearest neighbors ( should be 1, for now )}
+\item{knn}{k-nearest neighbors ( should be >= 1  )}
 
 \item{featureSubset}{a vector that selects a subset of features}
 
@@ -31,6 +31,8 @@ transformed to the space of the fixed image}
 use the former for smaller patch sizes.}
 
 \item{switchMatchDirection}{boolean}
+
+\item{kPackage}{name of package to use for knn}
 
 \item{verbose}{boolean}
 }
