@@ -70,3 +70,17 @@ myMatches = matchedPatches( img2, img, match, verbose = TRUE,
 plot( myMatches[[1]][[4]] * 100 )
 plot( myMatches[[2]][[4]] * 100 )
 ```
+
+TODO
+
+
+- allow a probabilistic representation of matching
+
+- provide a method for generating transforms from the matched landmarks (my RANSAC implementation is weak)
+
+- test on GPU
+
+- compare to SIFT
+
+- pass a transform to deepPatchMatch s.t. moving point distance can be calculated wrt tx
+
