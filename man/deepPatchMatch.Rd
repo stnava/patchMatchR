@@ -5,9 +5,9 @@
 \title{patch match two images with deep features}
 \usage{
 deepPatchMatch(movingImage, fixedImage, movingImageMask, fixedImageMask,
-  movingPatchSize = 32, fixedPatchSize = 32, knn = 1, featureSubset,
-  block_name = "block2_conv2", switchMatchDirection = FALSE,
-  kPackage = "FNN", verbose = FALSE)
+  movingPatchSize = 32, fixedPatchSize = 32, knn = 1,
+  knnSpatial = 0, featureSubset, block_name = "block2_conv2",
+  switchMatchDirection = FALSE, kPackage = "FNN", verbose = FALSE)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are
@@ -24,6 +24,10 @@ transformed to the space of the fixed image}
 \item{fixedPatchSize}{integer greater than or equal to 32.}
 
 \item{knn}{k-nearest neighbors ( should be >= 1  )}
+
+\item{knnSpatial}{k-nearest neighbors for spatial localization (optional).
+this will constrain the search to more proximal locations.  will perform
+better if the images are in the same physical space.}
 
 \item{featureSubset}{a vector that selects a subset of features}
 

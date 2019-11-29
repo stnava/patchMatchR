@@ -389,6 +389,9 @@ matchedPatches <- function(
 #' @param movingPatchSize integer greater than or equal to 32.
 #' @param fixedPatchSize integer greater than or equal to 32.
 #' @param knn k-nearest neighbors ( should be >= 1  )
+#' @param knnSpatial k-nearest neighbors for spatial localization (optional).
+#' this will constrain the search to more proximal locations.  will perform
+#' better if the images are in the same physical space.
 #' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
@@ -458,6 +461,7 @@ deepPatchMatch <- function(
   movingPatchSize = 32,
   fixedPatchSize = 32,
   knn = 1,
+  knnSpatial = 0,
   featureSubset,
   block_name = 'block2_conv2',
   switchMatchDirection = FALSE,
@@ -470,26 +474,35 @@ deepPatchMatch <- function(
       patchSize = fixedPatchSize, block_name = block_name  )
     if ( verbose ) print("DF2")
     mfeatures = deepFeatures( movingImage, movingImageMask,
-      patchSize = movingPatchSize, block_name = block_name  )
+      patchSize = movingPatchSize, block_name = block_name, vggmodel=ffeatures$featureModel  )
   } else {
     if ( verbose ) print("DF1-subset")
     ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize,
       featureSubset = featureSubset, block_name = block_name )
     if ( verbose ) print("DF2-subset")
     mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
-      featureSubset = featureSubset, block_name = block_name  )
+      featureSubset = featureSubset, block_name = block_name, vggmodel=ffeatures$featureModel  )
   }
-  if ( FALSE ) {
+  if ( knnSpatial > 0 ) {
     if ( verbose ) print("spatial-distance-begin")
-    fdistmat <- getNeighborhoodInMask(image = fixedImage, mask = fixedImageMask,
-      radius = c(0,0), physical.coordinates=TRUE, spatial.info=TRUE )
-    mdistmat <- getNeighborhoodInMask(image = movingImage, mask = movingImageMask,
-      radius = c(0,0), physical.coordinates=TRUE, spatial.info=TRUE )
+    fdistmat <- ffeatures$patchCoords
+    mdistmat <- mfeatures$patchCoords
+    # FIXME - add jitter to prevent zero distances
+    fspc = sqrt( sum( antsGetSpacing(fixedImage )))
+    mspc = sqrt( sum( antsGetSpacing(movingImage )))
+    jitterF = matrix( rnorm(length(fdistmat),0,1e-2*fspc),
+      ncol = fixedImage@dimension )
+    jitterM = matrix( rnorm(length(mdistmat),0,1e-2*mspc),
+      ncol = fixedImage@dimension )
     if ( !switchMatchDirection ) spatialDistMat = sparseDistanceMatrixXY(
-      t(mdistmat$indices), t(fdistmat$indices), k = knndist, kmetric='euclidean')
+      t(mdistmat+jitterM), t(fdistmat+jitterF),
+      k = knnSpatial, kmetric='euclidean', kPackage=kPackage)
     if ( switchMatchDirection ) spatialDistMat = sparseDistanceMatrixXY(
-      t(fdistmat$indices), t(mdistmat$indices), k = knndist, kmetric='euclidean')
+      t(fdistmat+jitterF), t(mdistmat+jitterM),
+      k = knnSpatial, kmetric='euclidean', kPackage=kPackage)
     if ( verbose ) print("spatial-distance-end")
+    # this will constrain the search
+    spatialDistMat[ spatialDistMat > 0] = 1
   }
   if ( verbose ) print("sdxy-begin")
   matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
@@ -498,6 +511,7 @@ deepPatchMatch <- function(
     mydist = sparseDistanceMatrixXY(
       t(ffeatures$features), t(mfeatures$features), k = knn,
       kmetric='euclidean', kPackage = kPackage )
+    if ( knnSpatial > 0 ) mydist = mydist * spatialDistMat
     best1s = qlcMatrix::colMin( mydist, which = TRUE  )
     for ( k in 1:ncol(best1s$which) ) {
       ww = which( best1s$which[,k] )
@@ -510,6 +524,7 @@ deepPatchMatch <- function(
     mydist = sparseDistanceMatrixXY(
       t(mfeatures$features), t(ffeatures$features), k = knn,
       kmetric='euclidean', kPackage = kPackage )
+    if ( knnSpatial > 0 ) mydist = mydist * spatialDistMat
     best1s = qlcMatrix::rowMin( mydist, which = TRUE  )
     for ( k in 1:nrow(best1s$which) ) {
       ww = which( best1s$which[k,] )
