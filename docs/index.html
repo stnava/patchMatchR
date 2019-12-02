@@ -70,7 +70,7 @@
 <div id="patchmatchr" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#patchmatchr" class="anchor"></a>patchMatchR</h1></div>
-<p>very basic patch matching functionality based on ANTsR</p>
+<p>very basic patch matching functionality based on ANTsR – see <a href="https://stnava.github.io/patchMatchR/">documentation</a></p>
 <p><a href="https://travis-ci.org/stnava/patchMatchR"><img src="https://travis-ci.org/stnava/patchMatchR.png?branch=master" alt="Build Status"></a></p>
 <div id="installation" class="section level3">
 <h3 class="hasAnchor">
@@ -120,6 +120,14 @@ myMatches = matchedPatches( img2, img, match, verbose = TRUE,
   fixedPatchRadius = myr+1  )
 plot( myMatches[[1]][[4]] * 100 )
 plot( myMatches[[2]][[4]] * 100 )</a></code></pre>
+<p>TODO</p>
+<ul>
+<li><p>allow a probabilistic representation of matching</p></li>
+<li><p>provide a method for generating transforms from the matched landmarks (my RANSAC implementation is weak)</p></li>
+<li><p>test on GPU</p></li>
+<li><p>compare to SIFT</p></li>
+<li><p>pass a transform to deepPatchMatch s.t. moving point distance can be calculated wrt tx</p></li>
+</ul>
 </div>
 </div>
   </div>

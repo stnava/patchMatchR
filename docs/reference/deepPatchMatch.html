@@ -111,8 +111,9 @@ therefore minimizes the number of parameters the user needs to choose.</p>
     </div>
 
     <pre class="usage"><span class='fu'>deepPatchMatch</span>(<span class='no'>movingImage</span>, <span class='no'>fixedImage</span>, <span class='no'>movingImageMask</span>, <span class='no'>fixedImageMask</span>,
-  <span class='kw'>movingPatchSize</span> <span class='kw'>=</span> <span class='fl'>32</span>, <span class='kw'>fixedPatchSize</span> <span class='kw'>=</span> <span class='fl'>32</span>, <span class='kw'>knn</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='no'>featureSubset</span>,
-  <span class='kw'>block_name</span> <span class='kw'>=</span> <span class='st'>"block2_conv2"</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+  <span class='kw'>movingPatchSize</span> <span class='kw'>=</span> <span class='fl'>32</span>, <span class='kw'>fixedPatchSize</span> <span class='kw'>=</span> <span class='fl'>32</span>, <span class='kw'>knn</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>knnSpatial</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='no'>featureSubset</span>, <span class='kw'>block_name</span> <span class='kw'>=</span> <span class='st'>"block2_conv2"</span>,
+  <span class='kw'>switchMatchDirection</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>kPackage</span> <span class='kw'>=</span> <span class='st'>"FNN"</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -144,7 +145,15 @@ transformed to the space of the fixed image</p></td>
     </tr>
     <tr>
       <th>knn</th>
-      <td><p>k-nearest neighbors ( should be 1, for now )</p></td>
+      <td><p>k-nearest neighbors ( should be &gt;= 1  )</p></td>
+    </tr>
+    <tr>
+      <th>knnSpatial</th>
+      <td><p>k-nearest neighbors for spatial localization (optional).
+this will constrain the search to more proximal locations.  will perform
+better if the images are in the same physical space. FIXME - allow a
+transformation to be passed to this step s.t. moving points can be
+transformed to fixed space before distance assessment.</p></td>
     </tr>
     <tr>
       <th>featureSubset</th>
@@ -154,6 +163,14 @@ transformed to the space of the fixed image</p></td>
       <th>block_name</th>
       <td><p>name of vgg feature block, either block2_conv2 or integer.
 use the former for smaller patch sizes.</p></td>
+    </tr>
+    <tr>
+      <th>switchMatchDirection</th>
+      <td><p>boolean</p></td>
+    </tr>
+    <tr>
+      <th>kPackage</th>
+      <td><p>name of package to use for knn</p></td>
     </tr>
     <tr>
       <th>verbose</th>

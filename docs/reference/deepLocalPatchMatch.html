@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>extract deep features from 2D or 3D image — deepFeatures • patchMatchR</title>
+<title>locally constrained deep feature patch matching — deepLocalPatchMatch • patchMatchR</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="extract deep features from 2D or 3D image — deepFeatures" />
+<meta property="og:title" content="locally constrained deep feature patch matching — deepLocalPatchMatch" />
 
-<meta property="og:description" content="High-level function for extracting features based on a pretrained network." />
+<meta property="og:description" content="High-level function for deep patch matching constrained to be local." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -97,38 +97,54 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>extract deep features from 2D or 3D image</h1>
+    <h1>locally constrained deep feature patch matching</h1>
     
-    <div class="hidden name"><code>deepFeatures.Rd</code></div>
+    <div class="hidden name"><code>deepLocalPatchMatch.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>High-level function for extracting features based on a pretrained network.</p>
+    <p>High-level function for deep patch matching constrained to be local.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>deepFeatures</span>(<span class='no'>x</span>, <span class='no'>mask</span>, <span class='kw'>patchSize</span> <span class='kw'>=</span> <span class='fl'>64</span>, <span class='no'>featureSubset</span>,
-  <span class='kw'>block_name</span> <span class='kw'>=</span> <span class='st'>"block2_conv2"</span>, <span class='no'>vggmodel</span>)</pre>
+    <pre class="usage"><span class='fu'>deepLocalPatchMatch</span>(<span class='no'>movingImage</span>, <span class='no'>fixedImage</span>, <span class='no'>movingImageMask</span>,
+  <span class='no'>fixedImageMask</span>, <span class='kw'>patchSize</span> <span class='kw'>=</span> <span class='fl'>32</span>, <span class='kw'>knn</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>localSearchRadius</span> <span class='kw'>=</span> <span class='fl'>5</span>,
+  <span class='no'>nSamples</span>, <span class='kw'>block_name</span> <span class='kw'>=</span> <span class='st'>"block2_conv2"</span>, <span class='kw'>kPackage</span> <span class='kw'>=</span> <span class='st'>"FNN"</span>,
+  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>input input image</p></td>
+      <th>movingImage</th>
+      <td><p>input image from which we extract patches that are
+transformed to the space of the fixed image</p></td>
     </tr>
     <tr>
-      <th>mask</th>
+      <th>fixedImage</th>
+      <td><p>input image that provides the fixed reference domain.</p></td>
+    </tr>
+    <tr>
+      <th>movingImageMask</th>
+      <td><p>defines the object of interest in the movingImage</p></td>
+    </tr>
+    <tr>
+      <th>fixedImageMask</th>
       <td><p>defines the object of interest in the fixedImage</p></td>
     </tr>
     <tr>
-      <th>patchSize</th>
-      <td><p>vector or scalar defining patch dimensions</p></td>
+      <th>knn</th>
+      <td><p>k-nearest neighbors ( should be &gt;= 1  )</p></td>
     </tr>
     <tr>
-      <th>featureSubset</th>
-      <td><p>a vector that selects a subset of features</p></td>
+      <th>localSearchRadius</th>
+      <td><p>radius value passed to <code>makePointsImage</code></p></td>
+    </tr>
+    <tr>
+      <th>nSamples</th>
+      <td><p>number of local samples (optional), can speed things up at
+the cost of some accuracy</p></td>
     </tr>
     <tr>
       <th>block_name</th>
@@ -136,22 +152,41 @@
 use the former for smaller patch sizes.</p></td>
     </tr>
     <tr>
-      <th>vggmodel</th>
-      <td><p>prebuilt feature model</p></td>
+      <th>kPackage</th>
+      <td><p>name of package to use for knn</p></td>
+    </tr>
+    <tr>
+      <th>verbose</th>
+      <td><p>boolean</p></td>
+    </tr>
+    <tr>
+      <th>movingPatchSize</th>
+      <td><p>integer greater than or equal to 32.</p></td>
+    </tr>
+    <tr>
+      <th>fixedPatchSize</th>
+      <td><p>integer greater than or equal to 32.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>feature array, patches and patch coordinates</p>
+    <p>correspondence data</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
-<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>ANTsR</span>)
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>( <span class='no'>keras</span> )
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>( <span class='no'>ANTsR</span> )
+<span class='no'>nP1</span> <span class='kw'>=</span> <span class='fl'>5</span>
+<span class='no'>nP2</span> <span class='kw'>=</span> <span class='fl'>20</span>
+<span class='no'>psz</span> <span class='kw'>=</span> <span class='fl'>32</span>
 <span class='no'>img</span> <span class='kw'>&lt;-</span> <span class='fu'>ri</span>( <span class='fl'>1</span> ) <span class='kw'>%&gt;%</span> <span class='fu'>iMath</span>( <span class='st'>"Normalize"</span> )
-<span class='no'>mask</span> <span class='kw'>=</span> <span class='fu'>randomMask</span>( <span class='fu'>getMask</span>( <span class='no'>img</span> ), <span class='fl'>20</span> )
-<span class='no'>features</span> <span class='kw'>=</span> <span class='fu'>deepFeatures</span>( <span class='no'>img</span>, <span class='no'>mask</span>, <span class='kw'>patchSize</span> <span class='kw'>=</span> <span class='fl'>32</span> )</div></pre>
+<span class='no'>img2</span> <span class='kw'>&lt;-</span> <span class='fu'>ri</span>( <span class='fl'>2</span> ) <span class='kw'>%&gt;%</span> <span class='fu'>iMath</span>( <span class='st'>"Normalize"</span> )
+<span class='no'>mask</span> <span class='kw'>=</span> <span class='fu'>randomMask</span>( <span class='fu'>getMask</span>( <span class='no'>img</span> ), <span class='no'>nP1</span> )
+<span class='no'>mask2</span> <span class='kw'>=</span> <span class='fu'>randomMask</span>( <span class='fu'>getMask</span>( <span class='no'>img2</span> ), <span class='no'>nP2</span> )
+<span class='no'>match</span> <span class='kw'>=</span> <span class='fu'>deepLocalPatchMatch</span>( <span class='no'>img2</span>, <span class='no'>img</span>, <span class='no'>mask</span>, <span class='no'>mask2</span> )</div><div class='output co'>#&gt; 1 ...2 ...3 ...4 ...5 ...6 ...7 ...8 ...9 ...10 ...11 ...12 ...13 ...14 ...15 ...16 ...17 ...18 ...19 ...20 ...</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

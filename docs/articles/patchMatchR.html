@@ -5,12 +5,11 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>
-<em>patchMatchR</em>: Patch-based matching and features for images in R • patchMatchR</title>
+<title> • patchMatchR</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="&lt;em&gt;patchMatchR&lt;/em&gt;: Patch-based matching and features for images in R">
+<script src="../pkgdown.js"></script><meta property="og:title" content="">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -62,11 +61,8 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>
-<em>patchMatchR</em>: Patch-based matching and features for images in R</h1>
-                        <h4 class="author">Brian B. Avants</h4>
+      <h1></h1>
             
-            <h4 class="date">2019-08-22</h4>
       
       
       <div class="hidden name"><code>patchMatchR.Rmd</code></div>
@@ -75,13 +71,15 @@
 
     
     
+matchO$— title: “<em>patchMatchR</em>: Patch-based matching and features for images in R” author: “Brian B. Avants” date: “2019-12-02” bibliography: REFERENCES.bib output: rmarkdown::html_vignette vignette: &gt; % % %
+<hr>
 <blockquote>
 <p>“patch that hole.” (folk wisdom)</p>
 </blockquote>
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
-<p>Patch-based correspondence is ideal for finding partial matches between image pairs, for example, between pre and post-operative MRI. Depending on the selected features, the matching may be robust to occlusion, noise, scale and rotation. The patch-wise approach also makes the matching more robust to initialization in comparison to more traditional, gradient-based methods that assume that image pairs overlap (in physical space) at initialization and contain no more than a 30 degree rotational difference <span class="citation">(Johnson, McCormick, and Ibanez 2015)</span>. Patch matching therefore provides a complementary set of tools in contrast to those provided by the majority of medical image registration tools.</p>
+<p>Patch-based correspondence is ideal for finding partial matches between image pairs, for example, between pre and post-operative MRI. Depending on the selected features, the matching may be robust to occlusion, noise, scale and rotation. The patch-wise approach also makes the matching more robust to initialization in comparison to more traditional, gradient-based methods that assume that image pairs overlap (in physical space) at initialization and contain no more than a 30 degree rotational difference <span class="citation">[@johnson2015itk]</span>. Patch matching therefore provides a complementary set of tools in contrast to those provided by the majority of medical image registration tools.</p>
 <p>This package, <em>patchMatchR</em>, provides an experimental framework for efficiently computing patch-based features and patch-based matches between image pairs. <em>patchMatchR</em> uses transformation and physical space definitions that are consistent with the Insight ToolKit (ITK) and Advanced Normalization Tools (ANTs). The input/output of images and transformation files can be used seamlessly between this package, <em>ITKR</em> and <em>ANTsR</em>.</p>
 <p>The basic concepts include:</p>
 <ul>
@@ -96,7 +94,7 @@
 <li><p>the methods should work effectively in 2D or 3D but additional testing is needed.</p></li>
 <li><p>one advantage of the matched patches is that they can be stored in the original image space, i.e. as bounding boxes. this can be useful for applications such as super-resolution and/or image decomposition via PCA or related methods.</p></li>
 </ul>
-<p>Many of the ideas in this work are inspired by traditional algorithms such as <em>patch match</em> <span class="citation">(Barnes et al. 2009)</span> and <em>SIFT</em> <span class="citation">(Lowe 2004)</span> and newer approaches such as google’s <em>DELF</em> <span class="citation">(Noh et al. 2017)</span>. The latter is very similar to SIFT but uses deep features. As this is a new package, little guidance is currently available for parameter setting. However, the number of parameters is also relatively small and, as such, parameter exploration is encouraged.</p>
+<p>Many of the ideas in this work are inspired by traditional algorithms such as <em>patch match</em> <span class="citation">[@barnes2009patchmatch]</span> and <em>SIFT</em> <span class="citation">[@lowe2004distinctive]</span> and newer approaches such as google’s <em>DELF</em> <span class="citation">[@noh2017large]</span>. The latter is very similar to SIFT but uses deep features. As this is a new package, little guidance is currently available for parameter setting. However, the number of parameters is also relatively small and, as such, parameter exploration is encouraged.</p>
 </div>
 <div id="algorithms-in-patchmatchr" class="section level1">
 <h1 class="hasAnchor">
@@ -109,9 +107,10 @@
 <li><p><code>fitTransformToPairedPoints</code>: will use either the Kabsch algorithm or a least squares fitting algorithm to match the pairs of points that the user provides.</p></li>
 <li><p><code>deepFeatures</code>: High-level function for extracting features based on a pretrained network.</p></li>
 <li><p><code>deepPatchMatch</code>: High-level function for deep patch matching that makes many assumptions and therefore minimizes the number of parameters.</p></li>
-<li><p><code>RANSAC</code>: Random sample consensus is an established method <span class="citation">(Fischler and Bolles 1981)</span> for identifying a subset of points consistent with a rigid or affine transformation.</p></li>
+<li><p><code>deepLocalPatchMatch</code>: High-level function for deep patch matching that is locally constrained.</p></li>
+<li><p><code>RANSAC</code>: Random sample consensus is an established method <span class="citation">[@fischler1981random]</span> for identifying a subset of points consistent with a rigid or affine transformation.</p></li>
 </ul>
-<p>The feature extraction and matching methods above will be much slower in three dimensions. As such, experimentation in 2D is encouraged.</p>
+<p>The feature extraction and matching methods above will be slower in three dimensions. As such, experimentation in 2D is encouraged.</p>
 </div>
 <div id="examples" class="section level1">
 <h1 class="hasAnchor">
@@ -120,76 +119,132 @@
 <h2 class="hasAnchor">
 <a href="#partial-matching" class="anchor"></a>Partial matching</h2>
 <p>Prepare the data. A brain slice and a version of that slice rotated and corrupted.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( ANTsR )</a>
-<a class="sourceLine" id="cb1-2" title="2">img =<span class="st"> </span><span class="kw">ri</span>( <span class="dv">1</span> )</a>
-<a class="sourceLine" id="cb1-3" title="3">cos45 =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Trig">cos</a></span>(pi<span class="op">*</span><span class="dv">15</span><span class="op">/</span><span class="dv">180</span>)</a>
-<a class="sourceLine" id="cb1-4" title="4">sin45 =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Trig">sin</a></span>(pi<span class="op">*</span><span class="dv">15</span><span class="op">/</span><span class="dv">180</span>)</a>
-<a class="sourceLine" id="cb1-5" title="5">txRotate &lt;-<span class="st"> </span><span class="kw">createAntsrTransform</span>( <span class="dt">precision=</span><span class="st">"float"</span>, <span class="dt">type=</span><span class="st">"AffineTransform"</span>, <span class="dt">dim=</span><span class="dv">2</span> )</a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="kw">setAntsrTransformParameters</span>(txRotate, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(cos45,<span class="op">-</span>sin45,sin45,cos45,<span class="dv">0</span>,<span class="dv">0</span>) )</a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="kw">setAntsrTransformFixedParameters</span>(txRotate, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">128</span>,<span class="dv">128</span>))</a>
-<a class="sourceLine" id="cb1-8" title="8">imgr =<span class="st"> </span><span class="kw">applyAntsrTransform</span>(txRotate, img, img)</a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, imgr, <span class="dt">colorbar =</span> <span class="ot">FALSE</span>, <span class="dt">alpha =</span>  <span class="fl">0.5</span>  )</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( ANTsR )</span>
+<span id="cb1-2"><a href="#cb1-2"></a>img =<span class="st"> </span><span class="kw">ri</span>( <span class="dv">1</span> )</span>
+<span id="cb1-3"><a href="#cb1-3"></a>cos45 =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Trig">cos</a></span>(pi<span class="op">*</span><span class="dv">15</span><span class="op">/</span><span class="dv">180</span>)</span>
+<span id="cb1-4"><a href="#cb1-4"></a>sin45 =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Trig">sin</a></span>(pi<span class="op">*</span><span class="dv">15</span><span class="op">/</span><span class="dv">180</span>)</span>
+<span id="cb1-5"><a href="#cb1-5"></a>txRotate &lt;-<span class="st"> </span><span class="kw">createAntsrTransform</span>( <span class="dt">precision=</span><span class="st">"float"</span>, <span class="dt">type=</span><span class="st">"AffineTransform"</span>, <span class="dt">dim=</span><span class="dv">2</span> )</span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="kw">setAntsrTransformParameters</span>(txRotate, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(cos45,<span class="op">-</span>sin45,sin45,cos45,<span class="dv">0</span>,<span class="dv">0</span>) )</span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="kw">setAntsrTransformFixedParameters</span>(txRotate, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">128</span>,<span class="dv">128</span>))</span>
+<span id="cb1-8"><a href="#cb1-8"></a>imgr =<span class="st"> </span><span class="kw">applyAntsrTransform</span>(txRotate, img, img)</span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, imgr, <span class="dt">colorbar =</span> <span class="ot">FALSE</span>, <span class="dt">alpha =</span>  <span class="fl">0.5</span>  )</span></code></pre></div>
 <p><img src="patchMatchR_files/figure-html/unnamed-chunk-1-1.png" width="700"></p>
 <pre><code>## NULL</code></pre>
 <p>Corrupt the image.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">makeNoise &lt;-<span class="st"> </span><span class="cf">function</span>( img, nzsd ) {</a>
-<a class="sourceLine" id="cb3-2" title="2">  temp =<span class="st"> </span><span class="kw">makeImage</span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/dim">dim</a></span>( img ), <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/prod">prod</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/dim">dim</a></span>( img ) ), <span class="dv">128</span>, nzsd ) )</a>
-<a class="sourceLine" id="cb3-3" title="3">  <span class="kw">antsCopyImageInfo</span>( img, temp )</a>
-<a class="sourceLine" id="cb3-4" title="4">}</a>
-<a class="sourceLine" id="cb3-5" title="5">nz =<span class="st"> </span><span class="kw">makeNoise</span>( img, <span class="dv">50</span> ) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">smoothImage</span>( <span class="dv">12</span> )</a>
-<a class="sourceLine" id="cb3-6" title="6">nzt =<span class="st"> </span><span class="kw">thresholdImage</span>( nz, <span class="dv">127</span>, <span class="ot">Inf</span> )</a>
-<a class="sourceLine" id="cb3-7" title="7">imgc =<span class="st"> </span>imgr <span class="op">*</span><span class="st"> </span>nzt</a>
-<a class="sourceLine" id="cb3-8" title="8"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb3-9" title="9"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, <span class="dt">colorbar =</span> <span class="ot">FALSE</span>   )</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>makeNoise &lt;-<span class="st"> </span><span class="cf">function</span>( img, nzsd ) {</span>
+<span id="cb3-2"><a href="#cb3-2"></a>  temp =<span class="st"> </span><span class="kw">makeImage</span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/dim">dim</a></span>( img ), <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/prod">prod</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/dim">dim</a></span>( img ) ), <span class="dv">128</span>, nzsd ) )</span>
+<span id="cb3-3"><a href="#cb3-3"></a>  <span class="kw">antsCopyImageInfo</span>( img, temp )</span>
+<span id="cb3-4"><a href="#cb3-4"></a>}</span>
+<span id="cb3-5"><a href="#cb3-5"></a>nz =<span class="st"> </span><span class="kw">makeNoise</span>( img, <span class="dv">50</span> ) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">smoothImage</span>( <span class="dv">12</span> )</span>
+<span id="cb3-6"><a href="#cb3-6"></a>nzt =<span class="st"> </span><span class="kw">thresholdImage</span>( nz, <span class="dv">127</span>, <span class="ot">Inf</span> )</span>
+<span id="cb3-7"><a href="#cb3-7"></a>imgc =<span class="st"> </span>imgr <span class="op">*</span><span class="st"> </span>nzt</span>
+<span id="cb3-8"><a href="#cb3-8"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>))</span>
+<span id="cb3-9"><a href="#cb3-9"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, <span class="dt">colorbar =</span> <span class="ot">FALSE</span>   )</span></code></pre></div>
 <pre><code>## NULL</code></pre>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( imgc, <span class="dt">colorbar =</span> <span class="ot">FALSE</span>   )</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( imgc, <span class="dt">colorbar =</span> <span class="ot">FALSE</span>   )</span></code></pre></div>
 <p><img src="patchMatchR_files/figure-html/unnamed-chunk-2-1.png" width="700"></p>
 <pre><code>## NULL</code></pre>
 <p>Now match the images.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">imgmask =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img ), <span class="dv">100</span> ) <span class="co"># may need more points than this</span></a>
-<a class="sourceLine" id="cb7-2" title="2">mtch =<span class="st"> </span><span class="kw"><a href="../reference/patchMatch.html">patchMatch</a></span>( imgc, img, imgmask, <span class="dt">fixedPatchRadius =</span> <span class="dv">7</span>  )</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>imgmask =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img ), <span class="dv">100</span> ) <span class="co"># may need more points than this</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a>mtch =<span class="st"> </span><span class="kw"><a href="../reference/patchMatch.html">patchMatch</a></span>( imgc, img, imgmask, <span class="dt">fixedPatchRadius =</span> <span class="dv">7</span>  )</span></code></pre></div>
 <pre><code>## ITK ExceptionObject caught !
 ## 
-## itk::ExceptionObject (0x7fa931249b30)
+## itk::ExceptionObject (0x7f8708d7df20)
 ## Location: "unknown" 
-## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.0/itkImageBase.hxx
-## Line: 194
-## Description: itk::ERROR: Image(0x7fa931249890): A spacing of 0 is not allowed: Spacing is [4.07143, 0]
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f8708d7dc80): A spacing of 0 is not allowed: Spacing is [8.17857, 0]
 ## 
 ## 
 ## ITK ExceptionObject caught !
 ## 
-## itk::ExceptionObject (0x7fa93124eaf0)
+## itk::ExceptionObject (0x7f8708d83a20)
 ## Location: "unknown" 
-## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.0/itkImageBase.hxx
-## Line: 194
-## Description: itk::ERROR: Image(0x7fa93124e850): A spacing of 0 is not allowed: Spacing is [4.07143, 0]</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">myMatches =<span class="st"> </span><span class="kw"><a href="../reference/matchedPatches.html">matchedPatches</a></span>( imgc, img, mtch, <span class="dt">fixedPatchRadius =</span> <span class="dv">7</span>, <span class="dt">verbose=</span><span class="ot">FALSE</span> )</a>
-<a class="sourceLine" id="cb9-2" title="2">k =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which.min">which.min</a></span>( mtch<span class="op">$</span>MI ) <span class="co"># mutual information</span></a>
-<a class="sourceLine" id="cb9-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb9-4" title="4"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( myMatches<span class="op">$</span>fixPatchList[[k]], <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F )</a></code></pre></div>
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f8708d83780): A spacing of 0 is not allowed: Spacing is [8.17857, 0]
+## 
+## 
+## ITK ExceptionObject caught !
+## 
+## itk::ExceptionObject (0x7f872daadec0)
+## Location: "unknown" 
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f872dae2680): A spacing of 0 is not allowed: Spacing is [8, 0]
+## 
+## 
+## ITK ExceptionObject caught !
+## 
+## itk::ExceptionObject (0x7f872dada060)
+## Location: "unknown" 
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f872da5bdc0): A spacing of 0 is not allowed: Spacing is [8, 0]
+## 
+## 
+## ITK ExceptionObject caught !
+## 
+## itk::ExceptionObject (0x7f8708d51bd0)
+## Location: "unknown" 
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f8708d51930): A spacing of 0 is not allowed: Spacing is [4.28571, 0]
+## 
+## 
+## ITK ExceptionObject caught !
+## 
+## itk::ExceptionObject (0x7f8708d55150)
+## Location: "unknown" 
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f8708d54f10): A spacing of 0 is not allowed: Spacing is [4.28571, 0]
+## 
+## 
+## ITK ExceptionObject caught !
+## 
+## itk::ExceptionObject (0x7f8738cd1a10)
+## Location: "unknown" 
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f8738cd16b0): A spacing of 0 is not allowed: Spacing is [4.14286, 0]
+## 
+## 
+## ITK ExceptionObject caught !
+## 
+## itk::ExceptionObject (0x7f8738cda600)
+## Location: "unknown" 
+## File: /Library/Frameworks/R.framework/Versions/3.6/Resources/library/ITKR/libs/include/ITK-5.1/itkImageBase.hxx
+## Line: 178
+## Description: itk::ERROR: Image(0x7f8738cda0b0): A spacing of 0 is not allowed: Spacing is [4.14286, 0]</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>myMatches =<span class="st"> </span><span class="kw"><a href="../reference/matchedPatches.html">matchedPatches</a></span>( imgc, img, mtch, <span class="dt">fixedPatchRadius =</span> <span class="dv">7</span>, <span class="dt">verbose=</span><span class="ot">FALSE</span> )</span>
+<span id="cb9-2"><a href="#cb9-2"></a>k =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which.min">which.min</a></span>( mtch<span class="op">$</span>MI ) <span class="co"># mutual information</span></span>
+<span id="cb9-3"><a href="#cb9-3"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>))</span>
+<span id="cb9-4"><a href="#cb9-4"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( myMatches<span class="op">$</span>fixPatchList[[k]], <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F )</span></code></pre></div>
 <pre><code>## NULL</code></pre>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( myMatches<span class="op">$</span>movPatchList[[k]], <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F )</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( myMatches<span class="op">$</span>movPatchList[[k]], <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F )</span></code></pre></div>
 <p><img src="patchMatchR_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
 <pre><code>## NULL</code></pre>
 <p>Compute the transformation using RANSAC - <em>this implementation needs some work in terms of identifying optimal parameters or potentially through an automated parameter search that is internal to the method</em></p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="co"># RANSAC(fixedPoints, movingPoints, transformType = "Affine",</span></a>
-<a class="sourceLine" id="cb13-2" title="2"><span class="co">#  minNtoFit = 16, maxIterations = 20, errorThreshold = 1,</span></a>
-<a class="sourceLine" id="cb13-3" title="3"><span class="co">#  goodProportion = 0.5, lambda = 1e-04, verbose = FALSE)</span></a>
-<a class="sourceLine" id="cb13-4" title="4">rrr =<span class="st"> </span><span class="kw"><a href="../reference/RANSAC.html">RANSAC</a></span>(</a>
-<a class="sourceLine" id="cb13-5" title="5">  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.matrix">data.matrix</a></span>(mtch[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">3</span>,<span class="dv">4</span>)]),</a>
-<a class="sourceLine" id="cb13-6" title="6">  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.matrix">data.matrix</a></span>(mtch[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">7</span>,<span class="dv">8</span>)]), <span class="dt">minNtoFit =</span> <span class="dv">16</span>,</a>
-<a class="sourceLine" id="cb13-7" title="7">  <span class="dt">transformType =</span> <span class="st">'Rigid'</span>,  <span class="dt">errorThreshold =</span> <span class="fl">0.6</span>,</a>
-<a class="sourceLine" id="cb13-8" title="8">  <span class="dt">maxIterations =</span> <span class="dv">2000</span>, <span class="dt">verbose=</span><span class="ot">FALSE</span>, <span class="dt">goodProportion =</span> <span class="dv">1</span> )</a>
-<a class="sourceLine" id="cb13-9" title="9">imgtx =<span class="st"> </span><span class="kw">applyAntsrTransformToImage</span>(  rrr<span class="op">$</span>bestModel<span class="op">$</span>transform, imgc, img )</a>
-<a class="sourceLine" id="cb13-10" title="10"><span class="kw">antsImageMutualInformation</span>( img, imgc )</a></code></pre></div>
-<pre><code>## [1] -1.1559</code></pre>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw">antsImageMutualInformation</span>( img, imgtx )</a></code></pre></div>
-<pre><code>## [1] -0.9935434</code></pre>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb17-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, imgc )</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="co"># RANSAC(fixedPoints, movingPoints, transformType = "Affine",</span></span>
+<span id="cb13-2"><a href="#cb13-2"></a><span class="co">#  minNtoFit = 16, maxIterations = 20, errorThreshold = 1,</span></span>
+<span id="cb13-3"><a href="#cb13-3"></a><span class="co">#  goodProportion = 0.5, lambda = 1e-04, verbose = FALSE)</span></span>
+<span id="cb13-4"><a href="#cb13-4"></a>rrr &lt;-<span class="st"> </span><span class="kw"><a href="../reference/RANSAC.html">RANSAC</a></span>(</span>
+<span id="cb13-5"><a href="#cb13-5"></a>  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.matrix">data.matrix</a></span>(mtch[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">3</span>,<span class="dv">4</span>)]),</span>
+<span id="cb13-6"><a href="#cb13-6"></a>  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/data.matrix">data.matrix</a></span>(mtch[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">7</span>,<span class="dv">8</span>)]), <span class="dt">transformType =</span> <span class="st">'Rigid'</span>,</span>
+<span id="cb13-7"><a href="#cb13-7"></a>  <span class="dt">minNtoFit =</span> <span class="dv">8</span>, <span class="dt">maxIterations =</span> <span class="dv">10000</span>,</span>
+<span id="cb13-8"><a href="#cb13-8"></a>  <span class="dt">errorThreshold =</span> <span class="fl">0.5</span>, <span class="dt">goodProportion =</span> <span class="fl">0.05</span>,</span>
+<span id="cb13-9"><a href="#cb13-9"></a>  <span class="dt">lambda =</span> <span class="fl">1e-4</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span> )</span>
+<span id="cb13-10"><a href="#cb13-10"></a></span>
+<span id="cb13-11"><a href="#cb13-11"></a>imgtx =<span class="st"> </span><span class="kw">applyAntsrTransformToImage</span>(  rrr<span class="op">$</span>bestModel<span class="op">$</span>transform, imgc, img )</span>
+<span id="cb13-12"><a href="#cb13-12"></a><span class="kw">antsImageMutualInformation</span>( img, imgc )</span></code></pre></div>
+<pre><code>## [1] -1.222115</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="kw">antsImageMutualInformation</span>( img, imgtx )</span></code></pre></div>
+<pre><code>## [1] -0.9956717</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>))</span>
+<span id="cb17-2"><a href="#cb17-2"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, imgc )</span></code></pre></div>
 <pre><code>## NULL</code></pre>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, imgtx )</a></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, imgtx )</span></code></pre></div>
 <p><img src="patchMatchR_files/figure-html/ransac-1.png" width="700"></p>
 <pre><code>## NULL</code></pre>
 </div>
@@ -197,51 +252,65 @@
 <h2 class="hasAnchor">
 <a href="#deep-features" class="anchor"></a>Deep features</h2>
 <p>Pre-trained deep convolutional networks provide rich feature spaces for image matching. Here, we show how to extract VGG19 features from medical images.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( keras )</a>
-<a class="sourceLine" id="cb21-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( abind )</a>
-<a class="sourceLine" id="cb21-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( ANTsRNet )</a>
-<a class="sourceLine" id="cb21-4" title="4">img &lt;-<span class="st"> </span><span class="kw">ri</span>( <span class="dv">1</span> ) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">iMath</span>( <span class="st">"Normalize"</span> )</a>
-<a class="sourceLine" id="cb21-5" title="5">mask =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img ), <span class="dv">20</span> )</a>
-<a class="sourceLine" id="cb21-6" title="6">features =<span class="st"> </span><span class="kw"><a href="../reference/deepFeatures.html">deepFeatures</a></span>( img, mask, <span class="dt">patchSize =</span> <span class="dv">32</span> )</a>
-<a class="sourceLine" id="cb21-7" title="7">pheatmap<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/pheatmap/topics/pheatmap">pheatmap</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/MathFun">abs</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/cor">cor</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/t">t</a></span>( features<span class="op">$</span>features ) ) ) )</a></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( keras )</span>
+<span id="cb21-2"><a href="#cb21-2"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( abind )</span>
+<span id="cb21-3"><a href="#cb21-3"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>( ANTsRNet )</span>
+<span id="cb21-4"><a href="#cb21-4"></a>img &lt;-<span class="st"> </span><span class="kw">ri</span>( <span class="dv">1</span> ) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">iMath</span>( <span class="st">"Normalize"</span> )</span>
+<span id="cb21-5"><a href="#cb21-5"></a>mask =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img ), <span class="dv">20</span> )</span>
+<span id="cb21-6"><a href="#cb21-6"></a>features =<span class="st"> </span><span class="kw"><a href="../reference/deepFeatures.html">deepFeatures</a></span>( img, mask, <span class="dt">patchSize =</span> <span class="dv">32</span> )</span>
+<span id="cb21-7"><a href="#cb21-7"></a>pheatmap<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/pheatmap/topics/pheatmap">pheatmap</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/MathFun">abs</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/cor">cor</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/t">t</a></span>( features<span class="op">$</span>features ) ) ) )</span></code></pre></div>
 <p><img src="patchMatchR_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
 </div>
 <div id="deep-feature-matching" class="section level2">
 <h2 class="hasAnchor">
 <a href="#deep-feature-matching" class="anchor"></a>Deep feature matching</h2>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" title="1">nP1 =<span class="st"> </span><span class="dv">50</span></a>
-<a class="sourceLine" id="cb22-2" title="2">nP2 =<span class="st"> </span><span class="dv">200</span></a>
-<a class="sourceLine" id="cb22-3" title="3">psz =<span class="st"> </span><span class="dv">32</span></a>
-<a class="sourceLine" id="cb22-4" title="4">img &lt;-<span class="st"> </span><span class="kw">iMath</span>( img, <span class="st">"Normalize"</span> )</a>
-<a class="sourceLine" id="cb22-5" title="5">img2 &lt;-<span class="st"> </span><span class="kw">iMath</span>( imgc, <span class="st">"Normalize"</span> )</a>
-<a class="sourceLine" id="cb22-6" title="6">mask =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img ), nP1 )</a>
-<a class="sourceLine" id="cb22-7" title="7">mask2 =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img2 ), nP2 )</a>
-<a class="sourceLine" id="cb22-8" title="8">match =<span class="st"> </span><span class="kw"><a href="../reference/deepPatchMatch.html">deepPatchMatch</a></span>(  img2, img, mask, mask2,</a>
-<a class="sourceLine" id="cb22-9" title="9">  <span class="dt">movingPatchSize =</span> psz, <span class="dt">fixedPatchSize =</span> psz, <span class="dt">verbose =</span> <span class="ot">FALSE</span>,</a>
-<a class="sourceLine" id="cb22-10" title="10">  <span class="dt">block_name =</span> <span class="dv">21</span> )</a>
-<a class="sourceLine" id="cb22-11" title="11">wsel =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>( <span class="op">!</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>( match<span class="op">$</span>matches ) )</a>
-<a class="sourceLine" id="cb22-12" title="12"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>, <span class="dt">byrow=</span>T) )</a>
-<a class="sourceLine" id="cb22-13" title="13">ss=<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(wsel,<span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb22-14" title="14"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( <span class="kw">as.antsImage</span>( match<span class="op">$</span>ffeatures<span class="op">$</span>patches[ss,,] ) , <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F )</a></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a>nP1 =<span class="st"> </span><span class="dv">500</span></span>
+<span id="cb22-2"><a href="#cb22-2"></a>nP2 =<span class="st"> </span><span class="dv">2000</span></span>
+<span id="cb22-3"><a href="#cb22-3"></a>psz =<span class="st"> </span><span class="dv">32</span></span>
+<span id="cb22-4"><a href="#cb22-4"></a>img &lt;-<span class="st"> </span><span class="kw">iMath</span>( img, <span class="st">"Normalize"</span> )</span>
+<span id="cb22-5"><a href="#cb22-5"></a>img2 &lt;-<span class="st"> </span><span class="kw">iMath</span>( imgc, <span class="st">"Normalize"</span> )</span>
+<span id="cb22-6"><a href="#cb22-6"></a>mask =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img ), nP1 )</span>
+<span id="cb22-7"><a href="#cb22-7"></a>mask2 =<span class="st"> </span><span class="kw">randomMask</span>( <span class="kw">getMask</span>( img2 ), nP2 )</span>
+<span id="cb22-8"><a href="#cb22-8"></a>blk =<span class="st"> </span><span class="dv">21</span></span>
+<span id="cb22-9"><a href="#cb22-9"></a>blk =<span class="st"> "block2_conv2"</span></span>
+<span id="cb22-10"><a href="#cb22-10"></a>matchO =<span class="st"> </span><span class="kw"><a href="../reference/deepPatchMatch.html">deepPatchMatch</a></span>(  img2, img, mask, mask2,</span>
+<span id="cb22-11"><a href="#cb22-11"></a>  <span class="dt">movingPatchSize =</span> psz, <span class="dt">fixedPatchSize =</span> psz, <span class="dt">verbose =</span> <span class="ot">FALSE</span>,</span>
+<span id="cb22-12"><a href="#cb22-12"></a>  <span class="dt">block_name =</span> blk, <span class="dt">switchMatchDirection =</span> T ) <span class="co"># , knnSpatial = 32</span></span>
+<span id="cb22-13"><a href="#cb22-13"></a>mlm =<span class="st"> </span><span class="kw"><a href="../reference/matchedLandmarks.html">matchedLandmarks</a></span>( matchO, img, img2, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(psz,img<span class="op">@</span>dimension) )</span>
+<span id="cb22-14"><a href="#cb22-14"></a>wsel =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/which">which</a></span>( <span class="op">!</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>( matchO<span class="op">$</span>matches ) )</span>
+<span id="cb22-15"><a href="#cb22-15"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>, <span class="dt">byrow=</span>T) )</span>
+<span id="cb22-16"><a href="#cb22-16"></a>ss=<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(wsel,<span class="dv">1</span>)</span>
+<span id="cb22-17"><a href="#cb22-17"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( <span class="kw">as.antsImage</span>( matchO<span class="op">$</span>ffeatures<span class="op">$</span>patches[ss,,] ) , <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F )</span></code></pre></div>
 <pre><code>## NULL</code></pre>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb24-1" title="1">sss =<span class="st"> </span>match<span class="op">$</span>matches[ss]</a>
-<a class="sourceLine" id="cb24-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( <span class="kw">as.antsImage</span>( match<span class="op">$</span>mfeatures<span class="op">$</span>patches[sss,,] ) , <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F  )</a></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a>sss =<span class="st"> </span>matchO<span class="op">$</span>matches[ss]</span>
+<span id="cb24-2"><a href="#cb24-2"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( <span class="kw">as.antsImage</span>( matchO<span class="op">$</span>mfeatures<span class="op">$</span>patches[sss,,] ) , <span class="dt">colorbar=</span>F, <span class="dt">doCropping=</span>F  )</span></code></pre></div>
 <p><img src="patchMatchR_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 <pre><code>## NULL</code></pre>
 <p>now follow up with a RANSAC</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb26-1" title="1">fpts =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/na.fail">na.omit</a></span>( match<span class="op">$</span>ffeatures<span class="op">$</span>patchCoords[ <span class="op">!</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>( match<span class="op">$</span>matches ), ] )</a>
-<a class="sourceLine" id="cb26-2" title="2">mpts =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/na.fail">na.omit</a></span>( match<span class="op">$</span>mfeatures<span class="op">$</span>patchCoords[ match<span class="op">$</span>match, ] )</a>
-<a class="sourceLine" id="cb26-3" title="3">result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/RANSAC.html">RANSAC</a></span>(  fpts, mpts, <span class="dt">transformType =</span> <span class="st">'Rigid'</span>,</a>
-<a class="sourceLine" id="cb26-4" title="4">  <span class="dt">minNtoFit =</span> <span class="dv">12</span>, <span class="dt">maxIterations =</span> <span class="dv">2000</span>,</a>
-<a class="sourceLine" id="cb26-5" title="5">  <span class="dt">errorThreshold =</span> <span class="dv">2</span>, <span class="dt">goodProportion =</span> <span class="dv">1</span>,</a>
-<a class="sourceLine" id="cb26-6" title="6">  <span class="dt">lambda =</span> <span class="fl">1e-8</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span> )</a>
-<a class="sourceLine" id="cb26-7" title="7"><span class="co"># visualize</span></a>
-<a class="sourceLine" id="cb26-8" title="8">reg =<span class="st"> </span><span class="kw">applyAntsrTransformToImage</span>( result<span class="op">$</span>bestModel<span class="op">$</span>transform, imgc, img )</a>
-<a class="sourceLine" id="cb26-9" title="9"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>, <span class="dt">byrow=</span>T) )</a>
-<a class="sourceLine" id="cb26-10" title="10"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, <span class="dt">colorbar =</span> F  )</a></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a>result &lt;-<span class="st"> </span><span class="kw"><a href="../reference/RANSAC.html">RANSAC</a></span>( mlm<span class="op">$</span>fixedPoints, mlm<span class="op">$</span>movingPoints, <span class="dt">transformType =</span> <span class="st">'Rigid'</span>,</span>
+<span id="cb26-2"><a href="#cb26-2"></a>  <span class="dt">minNtoFit =</span> <span class="dv">8</span>, <span class="dt">maxIterations =</span> <span class="dv">10000</span>,</span>
+<span id="cb26-3"><a href="#cb26-3"></a>  <span class="dt">errorThreshold =</span> <span class="fl">0.5</span>, <span class="dt">goodProportion =</span> <span class="fl">0.05</span>,</span>
+<span id="cb26-4"><a href="#cb26-4"></a>  <span class="dt">lambda =</span> <span class="fl">1e-4</span>, <span class="dt">verbose =</span> <span class="ot">FALSE</span> )</span>
+<span id="cb26-5"><a href="#cb26-5"></a><span class="co"># visualize</span></span>
+<span id="cb26-6"><a href="#cb26-6"></a>reg =<span class="st"> </span><span class="kw">applyAntsrTransformToImage</span>( result<span class="op">$</span>bestModel<span class="op">$</span>transform, imgc, img )</span>
+<span id="cb26-7"><a href="#cb26-7"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>, <span class="dt">byrow=</span>T) )</span>
+<span id="cb26-8"><a href="#cb26-8"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img, <span class="dt">colorbar =</span> F  )</span></code></pre></div>
 <pre><code>## NULL</code></pre>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb28-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( reg, <span class="dt">colorbar =</span> F   )</a></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( reg, <span class="dt">colorbar =</span> F   )</span></code></pre></div>
 <p><img src="patchMatchR_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<pre><code>## NULL</code></pre>
+<p>Show some matched points.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a>idim =<span class="st"> </span>img<span class="op">@</span>dimension</span>
+<span id="cb30-2"><a href="#cb30-2"></a>k =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(<span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>( mlm<span class="op">$</span>fixedPoints), <span class="dv">10</span>, <span class="dt">replace=</span>F )</span>
+<span id="cb30-3"><a href="#cb30-3"></a>lmImage1 =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ANTsR/topics/makePointsImage">makePointsImage</a></span>(</span>
+<span id="cb30-4"><a href="#cb30-4"></a>  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(mlm<span class="op">$</span>fixedPoints[k,],<span class="dt">ncol=</span>idim), img, <span class="dt">radius =</span> <span class="dv">7</span> )</span>
+<span id="cb30-5"><a href="#cb30-5"></a>lmImage2 =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ANTsR/topics/makePointsImage">makePointsImage</a></span>(</span>
+<span id="cb30-6"><a href="#cb30-6"></a>  <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(mlm<span class="op">$</span>movingPoints[k,],<span class="dt">ncol=</span>idim), img2, <span class="dt">radius =</span> <span class="dv">7</span> )</span>
+<span id="cb30-7"><a href="#cb30-7"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/layout">layout</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">nrow=</span><span class="dv">1</span>) )</span>
+<span id="cb30-8"><a href="#cb30-8"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img<span class="op">*</span><span class="dv">222</span>, lmImage1, <span class="dt">doCropping=</span>F  )</span></code></pre></div>
+<pre><code>## NULL</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>( img2<span class="op">*</span><span class="dv">222</span>, lmImage2, <span class="dt">doCropping=</span>F   )</span></code></pre></div>
+<p><img src="patchMatchR_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <pre><code>## NULL</code></pre>
 </div>
 </div>
@@ -250,26 +319,9 @@
 <a href="#summary" class="anchor"></a>Summary</h1>
 <p>We certainly expect some bugs or usability issues to arise and these can only be improved if we get feedback and/or suggestions from those who have interest in these methods. Enjoy and please refer issues or suggestions to <a href="https://github.com/stnava/patchMatchR/issues">patchMatchR issues</a>.</p>
 </div>
-<div id="references" class="section level1 unnumbered">
+<div id="references" class="section level1">
 <h1 class="hasAnchor">
 <a href="#references" class="anchor"></a>References</h1>
-<div id="refs" class="references">
-<div id="ref-barnes2009patchmatch">
-<p>Barnes, Connelly, Eli Shechtman, Adam Finkelstein, and Dan B Goldman. 2009. “PatchMatch: A Randomized Correspondence Algorithm for Structural Image Editing.” In <em>ACM Transactions on Graphics (Tog)</em>, 28:24. 3. ACM.</p>
-</div>
-<div id="ref-fischler1981random">
-<p>Fischler, Martin A, and Robert C Bolles. 1981. “Random Sample Consensus: A Paradigm for Model Fitting with Applications to Image Analysis and Automated Cartography.” <em>Communications of the ACM</em> 24 (6). ACM: 381–95.</p>
-</div>
-<div id="ref-johnson2015itk">
-<p>Johnson, Hans J, Matthew M McCormick, and Luis Ibanez. 2015. <em>The Itk Software Guide Book 2: Design and Functionality-Volume 2</em>. Kitware, Inc.</p>
-</div>
-<div id="ref-lowe2004distinctive">
-<p>Lowe, David G. 2004. “Distinctive Image Features from Scale-Invariant Keypoints.” <em>International Journal of Computer Vision</em> 60 (2). Springer: 91–110.</p>
-</div>
-<div id="ref-noh2017large">
-<p>Noh, Hyeonwoo, Andre Araujo, Jack Sim, Tobias Weyand, and Bohyung Han. 2017. “Large-Scale Image Retrieval with Attentive Deep Local Features.” In <em>Proceedings of the Ieee International Conference on Computer Vision</em>, 3456–65.</p>
-</div>
-</div>
 </div>
   </div>
 
@@ -281,7 +333,8 @@
 <li><a href="#introduction">Introduction</a></li>
       <li><a href="#algorithms-in-patchmatchr">Algorithms in <em>patchMatchR</em></a></li>
       <li>
-<a href="#examples">Examples</a><ul class="nav nav-pills nav-stacked">
+<a href="#examples">Examples</a>
+      <ul class="nav nav-pills nav-stacked">
 <li><a href="#partial-matching">Partial matching</a></li>
       <li><a href="#deep-features">Deep features</a></li>
       <li><a href="#deep-feature-matching">Deep feature matching</a></li>
