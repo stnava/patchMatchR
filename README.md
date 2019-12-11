@@ -84,3 +84,6 @@ TODO
 
 - pass a transform to deepPatchMatch s.t. moving point distance can be calculated wrt tx
 
+- multi-resolution strategy and/or localized refinement of matching
+
+
