@@ -509,6 +509,8 @@ deepPatchMatch <- function(
   if ( verbose ) print("sdxy-begin")
   matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
+  matchesKNN = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
+  costsKNN = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
   if ( switchMatchDirection ) {
     mydist = sparseDistanceMatrixXY(
       t(ffeatures$features), t(mfeatures$features), k = knn,
@@ -521,6 +523,8 @@ deepPatchMatch <- function(
         matches[ k, ] = ww[1]
         costs[k, ] = as.numeric( best1s$min[k] )
       }
+      matchesKNN[ k, ] = which( mydist[,k] > 0 )
+      costsKNN[ k, ] = mydist[ matchesKNN[ k, ], k ]
     }
   } else {
     mydist = sparseDistanceMatrixXY(
@@ -534,6 +538,8 @@ deepPatchMatch <- function(
         matches[ k, ] = ww[1]
         costs[k, ] = as.numeric( best1s$min[k] )
       } # length
+      matchesKNN[ k, ] = which( mydist[k,] > 0 )
+      costsKNN[k, ] = mydist[k, matchesKNN[ k, ] ]
     } # row
   } # else
   if ( verbose ) print("sdxy-fin")
@@ -547,7 +553,9 @@ deepPatchMatch <- function(
       ffeatures = ffeatures,
       mfeatures = mfeatures,
       matches = matches,
-      costs = costs )
+      costs = costs,
+      matchesK = matchesKNN,
+      costsK = costsKNN )
    )
 }
 
@@ -983,6 +991,7 @@ RANSAC <- function(
 #' @param referenceImage the fixed image
 #' @param movingImage the image that will be matched to the fixed image
 #' @param patch size of patch features
+#' @param whichK which matched point set (e.g. 1 gives the best, 2 second best and so on)
 #' @return output list contains fixed and matched points
 #'
 #' @export
@@ -1021,7 +1030,8 @@ matchedLandmarks <- function(
   matchObject,
   referenceImage,
   movingImage,
-  patchSize
+  patchSize,
+  whichK = 1
 ) {
 fixPoints = matrix( nrow = nrow( matchObject$matches ),
   ncol =  referenceImage@dimension )
@@ -1032,9 +1042,11 @@ for ( k in 1:nrow( matchObject$matches ) ) {
   fpt =  matchObject$ffeatures$patchCoords[k,] + off
   pt1phys = antsTransformIndexToPhysicalPoint( referenceImage, fpt )
   fixPoints[k,] = pt1phys
-  if ( ! is.na( matchObject$matches[k,1] ) ) {
+  myselected = order( matchObject$costsK[k,])[ whichK ]
+  if ( ! is.na( myselected ) )
+  if ( ! is.na( matchObject$matchesK[k,myselected] ) ) {
 #    pt1i = makePointsImage( pt1phys, img, radius = 2 ) * k
-    fpt2 = matchObject$mfeatures$patchCoords[matchObject$matches[k,1],] + off
+    fpt2 = matchObject$mfeatures$patchCoords[matchObject$matchesK[k,myselected],] + off
     pt2phys = antsTransformIndexToPhysicalPoint( movingImage, fpt2 )
     matchedPoints[k,] = pt2phys
 #    pt2i = makePointsImage( pt2phys, img2, radius = 2 ) * k

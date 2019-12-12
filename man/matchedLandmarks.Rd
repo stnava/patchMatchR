@@ -4,12 +4,15 @@
 \alias{matchedLandmarks}
 \title{Convert match output to landmarks in physical space}
 \usage{
-matchedLandmarks(matchObject, referenceImage, movingImage, patchSize)
+matchedLandmarks(matchObject, referenceImage, movingImage, patchSize,
+  whichK = 1)
 }
 \arguments{
 \item{referenceImage}{the fixed image}
 
 \item{movingImage}{the image that will be matched to the fixed image}
+
+\item{whichK}{which matched point set (e.g. 1 gives the best, 2 second best and so on)}
 
 \item{match}{object, the output of \code{deepPatchMatch}}
 
