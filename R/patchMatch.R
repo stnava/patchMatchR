@@ -25,10 +25,11 @@
 #' match = patchMatch( img2, img, mask, fixedPatchRadius = 3 )
 #'
 #' @export patchMatch
+#' @importFrom stats predict rnorm sd
 #' @importFrom graphics plot rasterImage rect plot.new text layout
-#' @importFrom ANTsR getCenterOfMass sparseDistanceMatrixXY
+#' @importFrom ANTsR getCenterOfMass sparseDistanceMatrixXY makePointsImage
 #' @importFrom ANTsRCore antsRegistration antsApplyTransforms applyAntsrTransformToImage antsApplyTransformsToPoints antsGetSpacing applyAntsrTransformToImage createAntsrTransform  cropIndices getNeighborhoodInMask iMath antsTransformPhysicalPointToIndex antsImageClone antsImageMutualInformation
-#' @importFrom ANTsRCore antsGetDirection antsGetOrigin resampleImage labelStats
+#' @importFrom ANTsRCore antsGetDirection antsGetOrigin resampleImage labelStats antsTransformIndexToPhysicalPoint applyAntsrTransformToPoint antsSetSpacing getAntsrTransformFixedParameters invertAntsrTransform randomMask labelClusters getAntsrTransformParameters getCentroids getMask readAntsrTransform ri
 patchMatch <- function(
   movingImage,
   fixedImage,

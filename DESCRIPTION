@@ -1,6 +1,6 @@
 Package: patchMatchR
 Type: Package
-Title: Local patch matching with flexible transformation models in n-dimensional images.
+Title: Local patch matching with flexible transformation models in n-dimensional images
 Version: 1.0
 Date: 2019-03-22
 Author: Brian B. Avants
@@ -17,14 +17,14 @@ License: Apache License (>=2.0)
 Depends:
     R (>= 3.2), ANTsRCore, ANTsR
 Imports:
-    knitr,
-    magrittr
-Suggests:
     abind,
     ANTsRNet,
-    ggplot2,
     keras,
-    qlcMatrix,
+    knitr,
+    magrittr,
+    qlcMatrix
+Suggests:
+    ggplot2,
     rmarkdown,
     tensorflow
 Roxygen: list(markdown = TRUE)

@@ -201,7 +201,7 @@ blk = 21
 blk = "block2_conv2"
 matchO = deepPatchMatch(  img2, img, mask, mask2,
   movingPatchSize = psz, fixedPatchSize = psz, verbose = FALSE,
-  block_name = blk, switchMatchDirection = T ) # , knnSpatial = 32
+  block_name = blk ) # , knnSpatial = 32
 mlm = matchedLandmarks( matchO, img, img2, rep(psz,img@dimension) )
 wsel = which( !is.na( matchO$matches ) )
 layout( matrix(1:2,nrow=1, byrow=T) )

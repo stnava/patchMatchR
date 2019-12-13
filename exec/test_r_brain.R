@@ -7,14 +7,14 @@ idim = 2 # image dimensionality
 nP1 = 2
 nP2 = 3000
 psz = 40
-myknn = 7 # how many points to find in target image
+myknn = 15 # how many points to find in target image
 img1 <- ri( 2 ) %>% iMath( "Normalize" )
-img2 <- ri( 4 ) %>% iMath( "Normalize" )
-img3 <- ri( 3 ) %>% iMath( "Normalize" )
+img2 <- ri( 2 ) %>% iMath( "Normalize" )
+img3 <- ri( 2 ) %>% iMath( "Normalize" )
 img2 = antsRegistration( img1, img2, "Rigid" )$warpedmovout
 img3 = antsRegistration( img1, img3, "Rigid" )$warpedmovout
 scaleParam = 4.5
-fullMask1 = iMath(img1*2000,"Canny",scaleParam,8,10)
+fullMask1 = iMath(img1*2000,"Canny",scaleParam,8,10) * getMask( img1 )
 mask1 = randomMask( fullMask1, nP1 )
 fullMask2 = iMath(img2*2000,"Canny",scaleParam,8,10)
 mask2 = randomMask( fullMask2, nP2 )
@@ -52,3 +52,13 @@ for ( k in 1:myknn ) {
 plot( fullMask3 )
 plot( img1*222, lmImage1, doCropping=T  )
 plot( img3*222, lmImage3, doCropping=T   )
+
+
+# build a graph reprsentation from a single image
+fullMask2 = iMath(img2*2000,"Canny",scaleParam,8,10)
+mask2 = randomMask( fullMask2, 500 )
+myFeats = deepFeatures( img2, mask2, patchSize = 32  )
+sdmat = sparseDistanceMatrix( t(myFeats$features), k = 5,  sinkhorn = FALSE )
+library( network )
+net = network( sdmat )
+plot( net )
