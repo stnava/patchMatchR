@@ -524,8 +524,11 @@ deepPatchMatch <- function(
         matches[ k, ] = ww[1]
         costs[k, ] = as.numeric( best1s$min[k] )
       }
-      matchesKNN[ k, ] = which( mydist[,k] > 0 )
-      costsKNN[ k, ] = mydist[ matchesKNN[ k, ], k ]
+      ww = which( mydist[,k] > 0 )
+      if ( length( ww ) > 0 ) {
+        matchesKNN[ k, ] = ww
+        costsKNN[ k, ] = mydist[ matchesKNN[ k, ], k ]
+      }
     }
   } else {
     mydist = sparseDistanceMatrixXY(
@@ -539,8 +542,11 @@ deepPatchMatch <- function(
         matches[ k, ] = ww[1]
         costs[k, ] = as.numeric( best1s$min[k] )
       } # length
-      matchesKNN[ k, ] = which( mydist[k,] > 0 )
-      costsKNN[k, ] = mydist[k, matchesKNN[ k, ] ]
+      ww = which( mydist[k,] > 0 )
+      if ( length( ww ) > 0 ) {
+        matchesKNN[ k, ] = which( mydist[k,] > 0 )
+        costsKNN[k, ] = mydist[k, matchesKNN[ k, ] ]
+        }
     } # row
   } # else
   if ( verbose ) print("sdxy-fin")
