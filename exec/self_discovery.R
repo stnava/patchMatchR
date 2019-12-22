@@ -61,18 +61,19 @@ mask1 = thresholdImage( selfPoints[[1]], 1, Inf )
 mask2 = thresholdImage( selfPoints[[2]], 1, Inf )
 img1 = ri( 1 )
 img2 = ri( 2 )
-myknn = 10
+myknn = 1
 matchO = deepPatchMatch(
   img2, img1,
   mask2, mask1, block_name = 'block2_conv2',  knn = myknn ) # knnSpatial=50 )
 mlm = matchedLandmarks( matchO, img1, img2, rep(patchSize, idim) )
+subsam = sample( 1:nrow(mlm$fixedPoints), 10 )
 lmImage1 = makePointsImage(
-  matrix(mlm$fixedPoints,ncol=idim), img1, radius = 2 )
+  matrix(mlm$fixedPoints[subsam,],ncol=idim), img1, radius = 2 )
 lmImage2 = makePointsImage(
-  matrix(mlm$movingPoints,ncol=idim), img2, radius = 2 )
+  matrix(mlm$movingPoints[subsam,],ncol=idim), img2, radius = 2 )
 layout( matrix(1:2,nrow=1))
-plot( img1*222, mask1, doCropping=T  )
-plot( img2*222, mask2, doCropping=T   )
+plot( img1*222, lmImage1, doCropping=T  )
+plot( img2*222, lmImage2, doCropping=T   )
 
 # sdmat = sparseDistanceMatrix( t(myFeats$features), k = 25,  sinkhorn = FALSE )
 message("represent as network")
