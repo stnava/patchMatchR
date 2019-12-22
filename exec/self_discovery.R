@@ -32,19 +32,19 @@ set.seed( Sys.time() )
 if ( ! exists( "ss" ) ) ss = sample(1:6)[1]
 print(ss)
 selfPoints = list()
-for ( ss in 1:6 ) {
+for ( ss in 1:2 ) {
   img2 = ri( ss )
   scaleParam = 4.5
   fullMask2 = getMask( img2 ) # iMath(img2*2000,"Canny",scaleParam,8,10)
   fullMask2 = iMath(img2*2000,"Canny",scaleParam,8,10)
-  npts = 10000
+  npts = 2000
   mask2 = randomMask( fullMask2, npts )
   patchSize = 32
   patchSizeDivBy2 = patchSize/2
   myFeats = deepFeatures( img2, mask2, patchSize = patchSize  )
   mycor = cor( t(myFeats$features ) )
-  mycor = mysink( mycor, 0.2 )
-  mycounts = countcors( mycor, thresh = quantile(mycor,0.95) )
+  mycor = mysink( mycor, 0.5 )
+  mycounts = countcors( mycor, thresh = quantile(mycor,0.90) )
   # bestk = sort( mycounts )[ round( npts * 0.01 )]
   bestk = sort( mycounts )[ 100 ]
   goodones = which( mycounts <= bestk )
