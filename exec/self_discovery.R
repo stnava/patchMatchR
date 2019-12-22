@@ -1,7 +1,7 @@
 library( keras )
 library( ANTsR )
 library( patchMatchR )
-dev.new(width=12,height=8)
+dev.new(width=6,height=4)
 layout( matrix(1:6,nrow=2))
 # build a graph reprsentation from a single image
 idim = 2
