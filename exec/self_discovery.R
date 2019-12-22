@@ -35,7 +35,9 @@ fullMask2 = getMask( img2 ) # iMath(img2*2000,"Canny",scaleParam,8,10)
 fullMask2 = iMath(img2*2000,"Canny",scaleParam,8,10)
 npts = 2000
 mask2 = randomMask( fullMask2, npts )
-myFeats = deepFeatures( img2, mask2, patchSize = 32  )
+patchSize = 32
+patchSizeDivBy2 = patchSize/2
+myFeats = deepFeatures( img2, mask2, patchSize = patchSize  )
 mycor = cor( t(myFeats$features ) )
 mycor = mysink( mycor, 0.2 )
 mycounts = countcors( mycor, thresh = quantile(mycor,0.95) )
@@ -43,7 +45,6 @@ mycounts = countcors( mycor, thresh = quantile(mycor,0.95) )
 bestk = sort( mycounts )[ 50 ]
 goodones = which( mycounts <= bestk )
 length(goodones)
-patchSizeDivBy2 = 16
 uniquePoints = makePointsImage(
   matrix(myFeats$patchCoords[goodones,]+patchSizeDivBy2,ncol=idim), img2, radius = 3 )
 plot( img2, uniquePoints )
