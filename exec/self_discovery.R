@@ -63,7 +63,7 @@ img1 = ri( 1 )
 img2 = ri( 2 )
 myknn = 1
 matchO = deepPatchMatch(
-  img2, img1,
+  img2, img1, knnSpatial = 50,
   mask2, mask1, block_name = 'block2_conv2',  knn = myknn ) # knnSpatial=50 )
 mlm = matchedLandmarks( matchO, img1, img2, rep(patchSize, idim) )
 subsam = sample( 1:nrow(mlm$fixedPoints), 10 )
