@@ -46,7 +46,7 @@ for ( ss in 1:6 ) {
   mycor = mysink( mycor, 0.2 )
   mycounts = countcors( mycor, thresh = quantile(mycor,0.95) )
   # bestk = sort( mycounts )[ round( npts * 0.01 )]
-  bestk = sort( mycounts )[ 50 ]
+  bestk = sort( mycounts )[ 100 ]
   goodones = which( mycounts <= bestk )
   length(goodones)
   uniquePoints = makePointsImage(
