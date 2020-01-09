@@ -375,7 +375,33 @@ matchedPatches <- function(
   return( list( fixPatchList = fixPatchList, movPatchList = movPatchList ) )
 }
 
-
+#' convert coordinates of deep feature patches to image-based physical coordinates
+#'
+#' High-level function for handling the converion between voxel and corner-based
+#' indices of patches to center and physical-based landmark coordinates.
+#'
+#' @param patchCoords input patch coordinates (usually from \code{deepFeatures})
+#' @param img reference image defining spatial domain
+#' @param patchSize vector or scalar defining patch dimensions
+#' @return spatial patch coordinates
+#' @author Avants BB
+#' @examples
+#'
+#' library(ANTsR)
+#' img <- ri( 1 ) %>% iMath( "Normalize" )
+#' mask = randomMask( getMask( img ), 20 )
+#' features = deepFeatures( img, mask, patchSize = 32 )
+#' coords = convertPatchCoordsToSpatialPoints( features$patchCoords, img )
+#'
+#' @export convertPatchCoordsToSpatialPoints
+convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) {
+  idim = img@dimension
+  patchSizeDivBy2 = patchSize / 2
+  locpts = matrix( patchCoords+patchSizeDivBy2, ncol = idim )
+  locpts = antsTransformIndexToPhysicalPoint( img, locpts )
+  ptrad = ptscl * sqrt( sum( antsGetSpacing( img )^2 ) )
+  return( locpts )
+}
 
 #' patch match two images with deep features
 #'
