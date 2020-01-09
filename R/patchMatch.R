@@ -399,7 +399,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
   patchSizeDivBy2 = patchSize / 2
   locpts = matrix( patchCoords+patchSizeDivBy2, ncol = idim )
   locpts = antsTransformIndexToPhysicalPoint( img, locpts )
-  ptrad = ptscl * sqrt( sum( antsGetSpacing( img )^2 ) )
+  #  ptrad = ptscl * sqrt( sum( antsGetSpacing( img )^2 ) )
   return( locpts )
 }
 
@@ -604,8 +604,7 @@ deepPatchMatch <- function(
 #' @param fixedImage input image that provides the fixed reference domain.
 #' @param movingImageMask defines the object of interest in the movingImage
 #' @param fixedImageMask defines the object of interest in the fixedImage
-#' @param movingPatchSize integer greater than or equal to 32.
-#' @param fixedPatchSize integer greater than or equal to 32.
+#' @param patchSize integer greater than or equal to 32.
 #' @param knn k-nearest neighbors ( should be >= 1  )
 #' @param localSearchRadius radius value passed to \code{makePointsImage}
 #' @param nSamples number of local samples (optional), can speed things up at
@@ -649,8 +648,8 @@ deepLocalPatchMatch <- function(
   # create a point mask for local regions
   createPointMask <- function( ptPhys, referenceMask, radius, nsamples ) {
     if ( ! missing( nsamples ) ) {
-      makePointsImage( matrix( ptPhys, nrow = 1 ), referenceMask,
-        radius=radius ) %>% randomMask( nsamples )
+      randomMask( makePointsImage( matrix( ptPhys, nrow = 1 ), referenceMask,
+        radius=radius ),  nsamples )
       } else makePointsImage( matrix( ptPhys, nrow = 1 ), referenceMask,
         radius=radius )
   }
@@ -866,7 +865,8 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
     antsSetSpacing( img, rep( 0.8 , 2 ) )
     img2 = ri( 5 )
     aff = antsRegistration( img, img2, "Affine" )
-    trueTx = readAntsrTransform( aff$fwdtransforms ) %>% invertAntsrTransform()
+    trueTx = readAntsrTransform( aff$fwdtransforms ) %>%
+    trueTx = invertAntsrTransform( trueTx )
     fixedParams = getAntsrTransformFixedParameters( trueTx )
     txParams = getAntsrTransformParameters( trueTx )
     # find some fixed and moving points
@@ -1020,10 +1020,10 @@ RANSAC <- function(
 
 #' Convert match output to landmarks in physical space
 #'
-#' @param match object, the output of \code{deepPatchMatch}
+#' @param matchObject object, the output of \code{deepPatchMatch}
 #' @param referenceImage the fixed image
 #' @param movingImage the image that will be matched to the fixed image
-#' @param patch size of patch features
+#' @param patchSize size of patch features
 #' @param whichK which matched point set (e.g. 1 gives the best, 2 second best and so on)
 #' @return output list contains fixed and matched points
 #'

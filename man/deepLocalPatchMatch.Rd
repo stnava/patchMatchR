@@ -19,6 +19,8 @@ transformed to the space of the fixed image}
 
 \item{fixedImageMask}{defines the object of interest in the fixedImage}
 
+\item{patchSize}{integer greater than or equal to 32.}
+
 \item{knn}{k-nearest neighbors ( should be >= 1  )}
 
 \item{localSearchRadius}{radius value passed to \code{makePointsImage}}
@@ -32,10 +34,6 @@ use the former for smaller patch sizes.}
 \item{kPackage}{name of package to use for knn}
 
 \item{verbose}{boolean}
-
-\item{movingPatchSize}{integer greater than or equal to 32.}
-
-\item{fixedPatchSize}{integer greater than or equal to 32.}
 }
 \value{
 correspondence data

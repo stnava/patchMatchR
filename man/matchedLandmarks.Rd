@@ -8,15 +8,15 @@ matchedLandmarks(matchObject, referenceImage, movingImage, patchSize,
   whichK = 1)
 }
 \arguments{
+\item{matchObject}{object, the output of \code{deepPatchMatch}}
+
 \item{referenceImage}{the fixed image}
 
 \item{movingImage}{the image that will be matched to the fixed image}
 
+\item{patchSize}{size of patch features}
+
 \item{whichK}{which matched point set (e.g. 1 gives the best, 2 second best and so on)}
-
-\item{match}{object, the output of \code{deepPatchMatch}}
-
-\item{patch}{size of patch features}
 }
 \value{
 output list contains fixed and matched points
