@@ -26,9 +26,10 @@
 #'
 #' @export patchMatch
 #' @importFrom stats predict rnorm sd
+#' @importFrom magrittr %>%
 #' @importFrom graphics plot rasterImage rect plot.new text layout
 #' @importFrom ANTsR getCenterOfMass sparseDistanceMatrixXY makePointsImage
-#' @importFrom ANTsRCore antsRegistration antsApplyTransforms applyAntsrTransformToImage antsApplyTransformsToPoints antsGetSpacing applyAntsrTransformToImage createAntsrTransform  cropIndices getNeighborhoodInMask iMath antsTransformPhysicalPointToIndex antsImageClone antsImageMutualInformation
+#' @importFrom ANTsRCore antsRegistration antsApplyTransforms applyAntsrTransformToImage antsApplyTransformsToPoints antsGetSpacing applyAntsrTransformToImage createAntsrTransform  cropIndices getNeighborhoodInMask iMath antsTransformPhysicalPointToIndex readAntsrTransform antsImageClone antsImageMutualInformation
 #' @importFrom ANTsRCore antsGetDirection antsGetOrigin resampleImage labelStats antsTransformIndexToPhysicalPoint applyAntsrTransformToPoint antsSetSpacing getAntsrTransformFixedParameters invertAntsrTransform randomMask labelClusters getAntsrTransformParameters getCentroids getMask readAntsrTransform ri
 patchMatch <- function(
   movingImage,
@@ -865,7 +866,7 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
     antsSetSpacing( img, rep( 0.8 , 2 ) )
     img2 = ri( 5 )
     aff = antsRegistration( img, img2, "Affine" )
-    trueTx = readAntsrTransform( aff$fwdtransforms ) %>%
+    trueTx = readAntsrTransform( aff$fwdtransforms )
     trueTx = invertAntsrTransform( trueTx )
     fixedParams = getAntsrTransformFixedParameters( trueTx )
     txParams = getAntsrTransformParameters( trueTx )
