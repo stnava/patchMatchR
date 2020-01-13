@@ -1,12 +1,12 @@
 library( keras )
 library( ANTsR )
 library( patchMatchR )
-set.seed( 1 ) # Sys.time() )
+set.seed( Sys.time() )
 idim = 2 # image dimensionality
-nP1 = 2
-nP2 = 500
+nP1 = 5
+nP2 = 5000
 psz = 32
-myknn = 12 # how many points to find in target image
+myknn = 25 # how many points to find in target image
 img1 <- ri( 1 ) %>% iMath( "Normalize" )
 img2 <- ri( 6 ) %>% iMath( "Normalize" )
 img2 = antsRegistration( img1, img2, "Rigid" )$warpedmovout
@@ -20,7 +20,7 @@ layout( matrix(1:3,nrow=1, byrow=T ))
 plot( fullMask2 )
 matchO = deepPatchMatch(
   img2, img1,
-  mask2, mask1, block_name = 'block2_conv2',  knn = myknn , knnSpatial=25 )
+  mask2, mask1, block_name = 'block2_conv2',  knn = myknn , knnSpatial = 25 )
 mlm = matchedLandmarks( matchO, img1, img2, rep(psz, idim) )
 lmImage1 = makePointsImage(
   matrix(mlm$fixedPoints,ncol=idim), img1, radius = 2 )
