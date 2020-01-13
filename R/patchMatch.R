@@ -553,8 +553,9 @@ deepPatchMatch <- function(
       }
       ww = which( mydist[,k] > 0 )
       if ( length( ww ) > 0 ) {
-        matchesKNN[ k, ] = ww
-        costsKNN[ k, ] = mydist[ matchesKNN[ k, ], k ]
+        availind = 1:length( ww )
+        matchesKNN[ k, availind ] = ww
+        costsKNN[ k, availind ] = mydist[ matchesKNN[ k, availind ], k ]
       }
     }
   } else {
@@ -571,8 +572,9 @@ deepPatchMatch <- function(
       } # length
       ww = which( mydist[k,] > 0 )
       if ( length( ww ) > 0 ) {
-        matchesKNN[ k, ] = which( mydist[k,] > 0 )
-        costsKNN[k, ] = mydist[k, matchesKNN[ k, ] ]
+        availind = 1:length( ww )
+        matchesKNN[ k, availind ] = ww
+        costsKNN[k, availind ] = mydist[k, matchesKNN[ k, availind ] ]
         }
     } # row
   } # else

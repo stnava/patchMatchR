@@ -5,12 +5,17 @@ dev.new(width=6,height=4)
 layout( matrix(1:6,nrow=2))
 # build a graph reprsentation from a single image
 idim = 2
+# count the number of neighbors with correlations > thresh
 countcors <- function( x, thresh=0.5 ) {
   mycounters = rep( NA, nrow( x  ) )
   for ( k in 1:nrow( x ) )
     mycounters[k] = as.numeric( table( x[k,] > thresh ) )[2]
   mycounters
 }
+gaussKernel <- function (X = NULL, sigma = NULL) {
+  return(exp(-1 * as.matrix(dist(X)^2)/sigma))
+}
+
 mysink <- function( x, thresh, iterations = 3 ) {
   diag(x) = 0
   x[ x < thresh ] = 0
@@ -35,20 +40,26 @@ selfPoints = list()
 for ( ss in 1:2 ) {
   img2 = ri( ss )
   scaleParam = 4.5
-  fullMask2 = getMask( img2 ) # iMath(img2*2000,"Canny",scaleParam,8,10)
-  fullMask2 = iMath(img2*2000,"Canny",scaleParam,8,10)
-  npts = 2000
+  fullMask2 = getMask( img2 )
+#  fullMask2 = iMath(img2*2000,"Canny",scaleParam,8,10)
+  npts = 5000
   mask2 = randomMask( fullMask2, npts )
   patchSize = 32
   patchSizeDivBy2 = patchSize/2
   myFeats = deepFeatures( img2, mask2, patchSize = patchSize  )
+#  t1=Sys.time()
   mycor = cor( t(myFeats$features ) )
-  mycor = mysink( mycor, 0.5 )
-  mycounts = countcors( mycor, thresh = quantile(mycor,0.90) )
+#  t2=Sys.time()
+#  mycor2 = gaussKernel( myFeats$features, 2000 )
+#  t3=Sys.time()
+  myut = upper.tri( mycor )
+  useSink = TRUE
+  if ( useSink ) mycor = mysink( mycor, 0.0 )
+  mycounts = countcors( mycor, thresh = quantile( mycor[myut], 0.9 ) )
   # bestk = sort( mycounts )[ round( npts * 0.01 )]
-  bestk = sort( mycounts )[ 100 ]
+  bestk = sort( mycounts )[ 500 ] # N-th index
   goodones = which( mycounts <= bestk )
-  length(goodones)
+  print(length(goodones))
   uniquePoints = makePointsImage(
     matrix(myFeats$patchCoords[goodones,]+patchSizeDivBy2,ncol=idim), img2, radius = 1 )
   plot( img2, uniquePoints )
@@ -64,7 +75,7 @@ img2 = ri( 2 )
 myknn = 1
 matchO = deepPatchMatch(
   img2, img1, knnSpatial = 50,
-  mask2, mask1, block_name = 'block2_conv2',  knn = myknn ) # knnSpatial=50 )
+  mask2, mask1, block_name = 'block2_conv2',  knn = myknn )
 mlm = matchedLandmarks( matchO, img1, img2, rep(patchSize, idim) )
 subsam = sample( 1:nrow(mlm$fixedPoints), 10 )
 lmImage1 = makePointsImage(
