@@ -27,9 +27,10 @@ transformed to the space of the fixed image}
 
 \item{knnSpatial}{k-nearest neighbors for spatial localization (optional).
 this will constrain the search to more proximal locations.  will perform
-better if the images are in the same physical space. FIXME - allow a
-transformation to be passed to this step s.t. moving points can be
-transformed to fixed space before distance assessment.}
+better if the images are in the same physical space. currently, the units
+for the spatial distance is in voxels.  may add physical space option later.
+FIXME - allow a transformation to be passed to this step s.t. moving points
+can be transformed to fixed space before distance assessment.}
 
 \item{featureSubset}{a vector that selects a subset of features}
 

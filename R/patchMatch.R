@@ -419,9 +419,10 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #' @param knn k-nearest neighbors ( should be >= 1  )
 #' @param knnSpatial k-nearest neighbors for spatial localization (optional).
 #' this will constrain the search to more proximal locations.  will perform
-#' better if the images are in the same physical space. FIXME - allow a
-#' transformation to be passed to this step s.t. moving points can be
-#' transformed to fixed space before distance assessment.
+#' better if the images are in the same physical space. currently, the units
+#' for the spatial distance is in voxels.  may add physical space option later.
+#' FIXME - allow a transformation to be passed to this step s.t. moving points
+#' can be transformed to fixed space before distance assessment.
 #' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
@@ -515,14 +516,16 @@ deepPatchMatch <- function(
   }
   if ( knnSpatial > 0 ) {
     if ( verbose ) print("spatial-distance-begin")
+#    fdistmat <- antsTransformIndexToPhysicalPoint(fixedImage,ffeatures$patchCoords)
+#    mdistmat <- antsTransformIndexToPhysicalPoint(movingImage,mfeatures$patchCoords)
     fdistmat <- ffeatures$patchCoords
     mdistmat <- mfeatures$patchCoords
     # FIXME - add jitter to prevent zero distances
     fspc = sqrt( sum( antsGetSpacing(fixedImage )))
     mspc = sqrt( sum( antsGetSpacing(movingImage )))
-    jitterF = matrix( rnorm(length(fdistmat),0,1e-2*fspc),
+    jitterF = matrix( rnorm(length(fdistmat),0,1e-4*fspc),
       ncol = fixedImage@dimension )
-    jitterM = matrix( rnorm(length(mdistmat),0,1e-2*mspc),
+    jitterM = matrix( rnorm(length(mdistmat),0,1e-4*mspc),
       ncol = fixedImage@dimension )
     if ( !switchMatchDirection ) spatialDistMat = sparseDistanceMatrixXY(
       t(mdistmat+jitterM), t(fdistmat+jitterF),
