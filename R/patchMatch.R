@@ -428,6 +428,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #' use the former for smaller patch sizes.
 #' @param switchMatchDirection boolean
 #' @param kPackage name of package to use for knn
+#' @param vggmodel prebuilt feature model
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -481,6 +482,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #'
 #' @export deepPatchMatch
 #' @importFrom ANTsRNet extractImagePatches extractImagePatchCoordinates createVggModel3D createVggModel2D
+#' @importFrom ANTsRNet createFullyConvolutionalVggModel2D createFullyConvolutionalVggModel3D
 #' @importFrom qlcMatrix colMin
 #' @importFrom abind abind
 #' @importFrom keras application_vgg19 keras_model get_layer get_weights set_weights
@@ -497,16 +499,26 @@ deepPatchMatch <- function(
   block_name = 'block2_conv2',
   switchMatchDirection = FALSE,
   kPackage = 'FNN',
+  vggmodel,
   verbose = FALSE )
 {
-  if ( missing( featureSubset ) ) {
+  if ( ! missing( vggmodel ) ) {
+    if ( verbose ) print("DF1")
+    ffeatures = deepFeatures( fixedImage, fixedImageMask,
+      patchSize = fixedPatchSize, block_name = block_name, vggmodel=vggmodel  )
+    if ( verbose ) print("DF2")
+    mfeatures = deepFeatures( movingImage, movingImageMask,
+      patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel   )
+  }
+  if (  missing( vggmodel ) )  {
     if ( verbose ) print("DF1")
     ffeatures = deepFeatures( fixedImage, fixedImageMask,
       patchSize = fixedPatchSize, block_name = block_name  )
     if ( verbose ) print("DF2")
     mfeatures = deepFeatures( movingImage, movingImageMask,
       patchSize = movingPatchSize, block_name = block_name, vggmodel=ffeatures$featureModel  )
-  } else {
+  }
+  if ( ! missing( featureSubset ) ) {
     if ( verbose ) print("DF1-subset")
     ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize,
       featureSubset = featureSubset, block_name = block_name )
@@ -730,21 +742,21 @@ deepFeatures <- function( x, mask, patchSize = 64,
   if ( missing( vggmodel ) ) {
     if ( idim == 2 ) {
       if ( block_name == 'block2_conv2' ) {
-        vggmodel = createVggModel2D( c( patchSize, 3 ), numberOfClassificationLabels = 1000,
+        vggmodel = createFullyConvolutionalVggModel2D(
+          list( NULL, NULL, 3 ),
           layers = c( 1, 2, 3 ), lowestResolution = 64,
           convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
-          strides = c(2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-          style = 19, mode = "classification")
+          strides = c(2, 2), dropoutRate = 0, style = 19 )
         vggmodel <- keras_model( inputs = vggmodel$input,
           outputs = get_layer(vggmodel, index = 6 )$output)
       } else {
       lays = c(1, 2, 3, 4, 4 )
       if ( block_name <= 6 ) lays = c( 1, 2, 3 )
-      vggmodel = createVggModel2D( c( patchSize, 3 ), numberOfClassificationLabels = 1000,
-           layers = lays, lowestResolution = 64,
-           convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
-           strides = c(2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-           style = 19, mode = "classification")
+      vggmodel = createFullyConvolutionalVggModel2D(
+        list( NULL, NULL, 3 ),
+        layers = lays, lowestResolution = 64,
+        convolutionKernelSize = c(3, 3), poolSize = c(2, 2),
+        strides = c(2, 2), dropoutRate = 0, style = 19 )
       vggmodel <- keras_model( inputs = vggmodel$input,
         outputs = get_layer(vggmodel, index = block_name )$output)
       }
@@ -775,21 +787,21 @@ deepFeatures <- function( x, mask, patchSize = 64,
       ######################################################################################
       nchan = 1
       if ( block_name == 'block2_conv2' ) {
-        vggmodel = createVggModel3D( c( patchSize, 1 ), numberOfClassificationLabels = 1000,
+        vggmodel = createFullyConvolutionalVggModel3D(
+          list( NULL, NULL, NULL, 1 ),
           layers = c( 1, 2, 3 ), lowestResolution = 64,
           convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
-          strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-          style = 19, mode = "classification")
+          strides = c(2, 2, 2),  dropoutRate = 0, style = 19 )
         vggmodel <- keras_model( inputs = vggmodel$input,
           outputs = get_layer(vggmodel, index = 6 )$output)
       } else {
         lays = c(1, 2, 3, 4, 4 )
         if ( block_name <= 6 ) lays = c( 1, 2, 3 )
-        vggmodel = createVggModel3D( c( patchSize, nchan ), numberOfClassificationLabels = 1000,
-           layers = lays, lowestResolution = 64,
-           convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
-           strides = c(2, 2, 2), numberOfDenseUnits = 4096, dropoutRate = 0,
-           style = 19, mode = "classification")
+        vggmodel = createFullyConvolutionalVggModel3D(
+          list( NULL, NULL, NULL, 1 ),
+          lays, lowestResolution = 64,
+          convolutionKernelSize = c(3, 3, 3), poolSize = c(2, 2, 2),
+          strides = c(2, 2, 2),  dropoutRate = 0, style = 19 )
         vggmodel <- keras_model( inputs = vggmodel$input,
           outputs = get_layer(vggmodel, index = block_name )$output)
       }

@@ -7,7 +7,8 @@
 deepPatchMatch(movingImage, fixedImage, movingImageMask, fixedImageMask,
   movingPatchSize = 32, fixedPatchSize = 32, knn = 1,
   knnSpatial = 0, featureSubset, block_name = "block2_conv2",
-  switchMatchDirection = FALSE, kPackage = "FNN", verbose = FALSE)
+  switchMatchDirection = FALSE, kPackage = "FNN", vggmodel,
+  verbose = FALSE)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are
@@ -40,6 +41,8 @@ use the former for smaller patch sizes.}
 \item{switchMatchDirection}{boolean}
 
 \item{kPackage}{name of package to use for knn}
+
+\item{vggmodel}{prebuilt feature model}
 
 \item{verbose}{boolean}
 }
