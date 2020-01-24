@@ -841,7 +841,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
     list(
       features=features,
       patches=patches0,
-      patchCoords = patchCoords,
+      patchCoords = patchCoords + floor( patchSize / 2 - 1 ),
       featureModel = vggmodel ) )
 }
 
@@ -1088,7 +1088,7 @@ fixPoints = matrix( nrow = nrow( matchObject$matches ),
   ncol =  referenceImage@dimension )
 matchedPoints = matrix( nrow = nrow( matchObject$matches ),
   ncol =  referenceImage@dimension )
-off = patchSize / 2
+off = 0 #
 for ( k in 1:nrow( matchObject$matches ) ) {
   fpt =  matchObject$ffeatures$patchCoords[k,] + off
   pt1phys = antsTransformIndexToPhysicalPoint( referenceImage, fpt )
