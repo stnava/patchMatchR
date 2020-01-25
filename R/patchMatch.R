@@ -429,6 +429,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #' @param switchMatchDirection boolean
 #' @param kPackage name of package to use for knn
 #' @param vggmodel prebuilt feature model
+#' @param subtractor value to subtract when scaling image intensity
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -500,31 +501,38 @@ deepPatchMatch <- function(
   switchMatchDirection = FALSE,
   kPackage = 'FNN',
   vggmodel,
+  subtractor = 127.5,
   verbose = FALSE )
 {
   if ( ! missing( vggmodel ) ) {
     if ( verbose ) print("DF1")
     ffeatures = deepFeatures( fixedImage, fixedImageMask,
-      patchSize = fixedPatchSize, block_name = block_name, vggmodel=vggmodel  )
+      patchSize = fixedPatchSize, block_name = block_name, vggmodel=vggmodel,
+      subtractor = subtractor  )
     if ( verbose ) print("DF2")
     mfeatures = deepFeatures( movingImage, movingImageMask,
-      patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel   )
+      patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel,
+      subtractor = subtractor    )
   }
   if (  missing( vggmodel ) )  {
     if ( verbose ) print("DF1")
     ffeatures = deepFeatures( fixedImage, fixedImageMask,
-      patchSize = fixedPatchSize, block_name = block_name  )
+      patchSize = fixedPatchSize, block_name = block_name,
+      subtractor = subtractor   )
     if ( verbose ) print("DF2")
     mfeatures = deepFeatures( movingImage, movingImageMask,
-      patchSize = movingPatchSize, block_name = block_name, vggmodel=ffeatures$featureModel  )
+      patchSize = movingPatchSize, block_name = block_name, vggmodel=ffeatures$featureModel,
+      subtractor = subtractor   )
   }
   if ( ! missing( featureSubset ) ) {
     if ( verbose ) print("DF1-subset")
     ffeatures = deepFeatures( fixedImage, fixedImageMask, patchSize = fixedPatchSize,
-      featureSubset = featureSubset, block_name = block_name )
+      featureSubset = featureSubset, block_name = block_name,
+      subtractor = subtractor  )
     if ( verbose ) print("DF2-subset")
     mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
-      featureSubset = featureSubset, block_name = block_name, vggmodel=ffeatures$featureModel  )
+      featureSubset = featureSubset, block_name = block_name, vggmodel=ffeatures$featureModel,
+      subtractor = subtractor   )
   }
   if ( knnSpatial > 0 ) {
     if ( verbose ) print("spatial-distance-begin")
@@ -723,6 +731,7 @@ deepLocalPatchMatch <- function(
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
 #' @param vggmodel prebuilt feature model
+#' @param subtractor value to subtract when scaling image intensity
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
@@ -734,7 +743,8 @@ deepLocalPatchMatch <- function(
 #'
 #' @export deepFeatures
 deepFeatures <- function( x, mask, patchSize = 64,
-  featureSubset, block_name = 'block2_conv2', vggmodel ) {
+  featureSubset, block_name = 'block2_conv2', vggmodel,
+  subtractor = 127.5 ) {
   idim = x@dimension
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
@@ -817,7 +827,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
       set_weights( vggmodel, vgg3Dweights )
     }
   } # exists vggmodel
-  x = iMath( x, "Normalize" ) * 255 - 127.5
+  x = iMath( x, "Normalize" ) * 255 - subtractor
   patches0 = extractImagePatches( x, patchSize, maskImage = mask,
     maxNumberOfPatches=sum(mask), returnAsArray = T, randomSeed = 1 )
   patchCoords = extractImagePatchCoordinates( x, patchSize, maskImage = mask,
