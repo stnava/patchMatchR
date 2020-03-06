@@ -4,8 +4,13 @@
 \alias{matchedLandmarks}
 \title{Convert match output to landmarks in physical space}
 \usage{
-matchedLandmarks(matchObject, referenceImage, movingImage, patchSize,
-  whichK = 1)
+matchedLandmarks(
+  matchObject,
+  referenceImage,
+  movingImage,
+  patchSize,
+  whichK = 1
+)
 }
 \arguments{
 \item{matchObject}{object, the output of \code{deepPatchMatch}}

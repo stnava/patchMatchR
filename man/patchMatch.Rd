@@ -4,9 +4,16 @@
 \alias{patchMatch}
 \title{patch match two images}
 \usage{
-patchMatch(movingImage, fixedImage, fixedImageMask,
-  finalTransform = "Rigid", fixedPatchRadius = 31, initialMap,
-  visualize = FALSE, verbose = FALSE)
+patchMatch(
+  movingImage,
+  fixedImage,
+  fixedImageMask,
+  finalTransform = "Rigid",
+  fixedPatchRadius = 31,
+  initialMap,
+  visualize = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are

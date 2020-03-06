@@ -4,10 +4,19 @@
 \alias{deepLocalPatchMatch}
 \title{locally constrained deep feature patch matching}
 \usage{
-deepLocalPatchMatch(movingImage, fixedImage, movingImageMask,
-  fixedImageMask, patchSize = 32, knn = 1, localSearchRadius = 5,
-  nSamples, block_name = "block2_conv2", kPackage = "FNN",
-  verbose = FALSE)
+deepLocalPatchMatch(
+  movingImage,
+  fixedImage,
+  movingImageMask,
+  fixedImageMask,
+  patchSize = 32,
+  knn = 1,
+  localSearchRadius = 5,
+  nSamples,
+  block_name = "block2_conv2",
+  kPackage = "FNN",
+  verbose = FALSE
+)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are

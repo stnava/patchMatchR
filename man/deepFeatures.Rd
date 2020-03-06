@@ -4,8 +4,15 @@
 \alias{deepFeatures}
 \title{extract deep features from 2D or 3D image}
 \usage{
-deepFeatures(x, mask, patchSize = 64, featureSubset,
-  block_name = "block2_conv2", vggmodel, subtractor = 127.5)
+deepFeatures(
+  x,
+  mask,
+  patchSize = 64,
+  featureSubset,
+  block_name = "block2_conv2",
+  vggmodel,
+  subtractor = 127.5
+)
 }
 \arguments{
 \item{x}{input input image}

@@ -4,8 +4,13 @@
 \alias{matchedPatches}
 \title{extract matched patches between two images}
 \usage{
-matchedPatches(movingImage, fixedImage, patchMatchOutput,
-  fixedPatchRadius = 31, verbose = FALSE)
+matchedPatches(
+  movingImage,
+  fixedImage,
+  patchMatchOutput,
+  fixedPatchRadius = 31,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{movingImage}{input image from which we extract patches that are

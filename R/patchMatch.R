@@ -1,3 +1,32 @@
+#' make a coordinate image
+#'
+#' This function will return n-dimensionality coordinate images that encode
+#' the spatial ITK coordinates of the image domain.
+#'
+#' @param mask defining wherein we create coordinates
+#' @param physicalCoordinates select index or phyiscal coordinates
+#' @return list of coordinate images
+#' @author Avants BB
+#' @examples
+#'
+#' library(ANTsR)
+#' img <- ri( 1 )
+#' coords = coordinateImages( img * 0 + 1, TRUE )
+#'
+#' @export
+coordinateImages <- function( mask, physicalCoordinates = TRUE ) {
+  temp = getNeighborhoodInMask( mask, mask,
+    rep( 0, mask@dimension ),
+    boundary.condition = "image", spatial.info = TRUE,
+    physical.coordinates = physicalCoordinates, get.gradient = FALSE)
+  ilist = list()
+  for ( i in 1:mask@dimension )
+    ilist[[i]] = makeImage( mask, temp$indices[,i] )
+  ilist
+}
+
+
+
 #' patch match two images
 #'
 #' High-level function for patch matching that makes many assumptions and
@@ -536,10 +565,10 @@ deepPatchMatch <- function(
   }
   if ( knnSpatial > 0 ) {
     if ( verbose ) print("spatial-distance-begin")
-#    fdistmat <- antsTransformIndexToPhysicalPoint(fixedImage,ffeatures$patchCoords)
-#    mdistmat <- antsTransformIndexToPhysicalPoint(movingImage,mfeatures$patchCoords)
-    fdistmat <- ffeatures$patchCoords
-    mdistmat <- mfeatures$patchCoords
+    fdistmat <- antsTransformIndexToPhysicalPoint(fixedImage,ffeatures$patchCoords)
+    mdistmat <- antsTransformIndexToPhysicalPoint(movingImage,mfeatures$patchCoords)
+#    fdistmat <- ffeatures$patchCoords
+#    mdistmat <- mfeatures$patchCoords
     # FIXME - add jitter to prevent zero distances
     fspc = sqrt( sum( antsGetSpacing(fixedImage )))
     mspc = sqrt( sum( antsGetSpacing(movingImage )))
@@ -687,7 +716,7 @@ deepLocalPatchMatch <- function(
   fixedCoords[ ] = matchedCoords[ ] = NA
   for ( i in 1:nrow( ffeatures$patches  ) ) {
     cat(paste(i,'...'))
-    off = patchSize / 2
+    off = 0
     fpt = ffeatures$patchCoords[i, ] + off
     ptPhys = antsTransformIndexToPhysicalPoint( fixedImageMask, fpt )
     fixedCoords[i,] = ptPhys
@@ -956,6 +985,81 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
     }
   return( list( transform = aff, error = err/n ) )
 }
+
+
+
+#' Fit transform to points with tensorflow
+#'
+#' This function will use either the Kabsch algorithm or a least squares fitting
+#' algorithm to match the pairs of points that the user provides.  A tensorflow
+#' tensor is returned.
+#'
+#' @param movingPoints moving points matrix
+#' @param fixedPoints fixed points matrix
+#' @param numberOfPoints per sample in batch
+#' @param dimensionality of the point set
+#' @param transformType Rigid, Similarity or Affine currently supported
+#' @param batch_size the batch size
+#' @param preventReflection boolean
+#' @return tensorflow tensor object.
+#' @export
+fitTransformToPairedPointsTF <-function(
+  movingPoints,
+  fixedPoints,
+  numberOfPoints,
+  dimensionality,
+  transformType = c( "Rigid", "Similarity", "Affine"  ),
+  batch_size = 1,
+  preventReflection = TRUE ) {
+  transformType = match.arg( transformType )
+  if ( class( fixedPoints )[1] != "tensorflow.tensor" ) {
+    xyz0 = array( fixedPoints, dim = c( batch_size, numberOfPoints, dimensionality ) )
+    xyz1 = array( movingPoints, dim = c( batch_size, numberOfPoints, dimensionality ) )
+  } else {
+    xyz0 = fixedPoints
+    xyz1 = movingPoints
+  }
+  cen0 = tf$reduce_mean(xyz0, 1L, keepdims=TRUE)
+  cen1 = tf$reduce_mean(xyz1, 1L, keepdims=TRUE)
+  xtf = xyz0 - cen0
+  ytf = xyz1 - cen1
+  if ( transformType == 'Affine' ) {
+    myones = tf$expand_dims( tf$expand_dims(
+      tf$cast( tf$ones( numberOfPoints ), 'float64' ), axis = c( 0L ) ), axis=2L )
+    myonesB = tf$expand_dims( tf$expand_dims(
+      tf$cast( tf$ones( numberOfPoints ), 'float64' ), axis = c( 0L ) ), axis=2L )
+    if ( batch_size > 1 )
+      for ( k in 1:(batch_size-1) ) myones = tf$concat( list(myones, myonesB ), axis=0L )
+    xtfu = tf$concat( list( xtf, myones ), axis=2L )
+    return( tf$linalg$matrix_transpose(
+      tf$linalg$lstsq( xtfu, ytf )[,1:dimensionality,1:dimensionality] ) )
+    }
+  cov = tf$matmul( ytf, xtf,  transpose_b = F, transpose_a=T )
+  mysvd = tf$linalg$svd(cov, full_matrices=T ) # returns _, u, v
+  u = mysvd[[2]]
+  v = mysvd[[3]]
+  d = tf$linalg$det(tf$matmul(v, u, transpose_b=F))
+  newu=list()
+  if ( preventReflection | transformType == "Similarity" ) {
+    tmp = tf$cast( numberOfPoints,'float64' )
+    for ( k in 1:batch_size ) {
+      newu[[k]] = u[[k-1]]
+      if ( as.numeric( d[[ k - 1 ]] ) < 0 ) {
+        signadj = diag( c( rep( 1, dimensionality - 1 ), -1 ) )
+        newu[[k]] = tf$cast( tf$matmul( u[[k-1]], signadj ), "float64" )
+        }
+      if (  transformType == "Similarity" ) {
+        scaling =  tf$math$sqrt( tf$reduce_mean( tf$reduce_sum( ytf[[k-1]]^2 )/tmp ) ) /
+                   tf$math$sqrt( tf$reduce_mean( tf$reduce_sum( xtf[[k-1]]^2 )/tmp ) )
+        scladj = diag( dimensionality ) * as.numeric( scaling )
+        newu[[k]] = tf$matmul(newu[[k]], tf$cast(scladj,'float64'), transpose_b=FALSE)
+        }
+      }
+    u = newu
+  }
+  return( tf$matmul(u, v, transpose_b=TRUE) ) # the rotation matrix
+}
+
 
 #' Random sample consensus (RANSAC)
 #'

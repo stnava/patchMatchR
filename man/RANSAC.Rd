@@ -4,9 +4,17 @@
 \alias{RANSAC}
 \title{Random sample consensus (RANSAC)}
 \usage{
-RANSAC(fixedPoints, movingPoints, transformType = "Affine",
-  minNtoFit = 16, maxIterations = 20, errorThreshold = 1,
-  goodProportion = 0.5, lambda = 1e-04, verbose = FALSE)
+RANSAC(
+  fixedPoints,
+  movingPoints,
+  transformType = "Affine",
+  minNtoFit = 16,
+  maxIterations = 20,
+  errorThreshold = 1,
+  goodProportion = 0.5,
+  lambda = 1e-04,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{fixedPoints}{fixed points matrix}

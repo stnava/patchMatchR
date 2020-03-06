@@ -4,8 +4,12 @@
 \alias{fitTransformToPairedPoints}
 \title{Fit transform to points}
 \usage{
-fitTransformToPairedPoints(movingPoints, fixedPoints,
-  transformType = "Affine", lambda = 1e-04)
+fitTransformToPairedPoints(
+  movingPoints,
+  fixedPoints,
+  transformType = "Affine",
+  lambda = 1e-04
+)
 }
 \arguments{
 \item{movingPoints}{moving points matrix}
