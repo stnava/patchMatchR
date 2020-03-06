@@ -1016,8 +1016,8 @@ fitTransformToPairedPointsTF <-function(
     xyz0 = array( fixedPoints, dim = c( batch_size, numberOfPoints, dimensionality ) )
     xyz1 = array( movingPoints, dim = c( batch_size, numberOfPoints, dimensionality ) )
   } else {
-    xyz0 = fixedPoints
-    xyz1 = movingPoints
+    xyz0 = tf$cast( fixedPoints, "float64" )
+    xyz1 = tf$cast(movingPoints, "float64" )
   }
   cen0 = tf$reduce_mean(xyz0, 1L, keepdims=TRUE)
   cen1 = tf$reduce_mean(xyz1, 1L, keepdims=TRUE)
