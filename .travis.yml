@@ -16,7 +16,7 @@ before_install:
   - Rscript -e 'install.packages("devtools")'
   - Rscript -e 'install.packages("rsvd")'
   - Rscript -e 'install.packages("magic")'
-  - Rscript -e 'install.packages(c( "pheatmap", "FNN", "pixmap", "misc3d", "psych","colormap", "qlcMatrix", "tensorflow","keras","reticulate","tfruns","zeallot","mvtnorm"))'
+  - Rscript -e 'install.packages(c( "pheatmap", "rmarkdown", "FNN", "pixmap", "misc3d", "psych","colormap", "qlcMatrix", "tensorflow","keras","reticulate","tfruns","zeallot","mvtnorm"))'
   - Rscript -e 'install.packages("RcppEigen")'
   - Rscript -e 'tensorflow::install_tensorflow()'
   - Rscript -e 'keras::install_keras()'
