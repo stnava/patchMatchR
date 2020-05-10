@@ -19,7 +19,7 @@ before_install:
   - Rscript -e 'install.packages("magic")'
   - Rscript -e 'install.packages(c("psych","colormap", "qlcMatrix", "tensorflow","keras","reticulate","tfruns","zeallot","mvtnorm"))'
   - Rscript -e 'install.packages("RcppEigen")'
-  - Rscript -e 'tensorfow::install_tensorflow()'
+  - Rscript -e 'tensorflow::install_tensorflow()'
   - Rscript -e 'keras::install_keras()'
   - gh_binary_install  stnava/ITKR ANTsX/ANTsRCore ANTsX/ANTsR
   - git clone https://github.com/ANTsX/ANTsRNet.git
