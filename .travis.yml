@@ -5,8 +5,7 @@ dist: xenial
 sudo: false
 warnings_are_errors: false # setting this false b/c of rcpp attribute error
 
-cache:
-  packages: true
+cache: packages
 
 before_install:
   - tlmgr install index
