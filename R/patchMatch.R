@@ -4,7 +4,7 @@
 #' the spatial ITK coordinates of the image domain.
 #'
 #' @param mask defining wherein we create coordinates
-#' @param physicalCoordinates select index or phyiscal coordinates
+#' @param physicalCoordinates boolean select index or phyiscal coordinates
 #' @return list of coordinate images
 #' @author Avants BB
 #' @examples
@@ -458,7 +458,8 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #' @param switchMatchDirection boolean
 #' @param kPackage name of package to use for knn
 #' @param vggmodel prebuilt feature model
-#' @param subtractor value to subtract when scaling image intensity
+#' @param subtractor value to subtract when scaling image intensity; should be
+#' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -533,12 +534,14 @@ deepPatchMatch <- function(
   subtractor = 127.5,
   verbose = FALSE )
 {
+  if ( verbose ) print( Sys.time() )
   if ( ! missing( vggmodel ) ) {
     if ( verbose ) print("DF1")
     ffeatures = deepFeatures( fixedImage, fixedImageMask,
       patchSize = fixedPatchSize, block_name = block_name, vggmodel=vggmodel,
       subtractor = subtractor  )
     if ( verbose ) print("DF2")
+    if ( verbose ) print( Sys.time() )
     mfeatures = deepFeatures( movingImage, movingImageMask,
       patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel,
       subtractor = subtractor    )
@@ -548,10 +551,13 @@ deepPatchMatch <- function(
     ffeatures = deepFeatures( fixedImage, fixedImageMask,
       patchSize = fixedPatchSize, block_name = block_name,
       subtractor = subtractor   )
-    if ( verbose ) print("DF2")
+    if ( verbose ) print("DF2x")
+    if ( verbose ) print( Sys.time() )
     mfeatures = deepFeatures( movingImage, movingImageMask,
       patchSize = movingPatchSize, block_name = block_name, vggmodel=ffeatures$featureModel,
       subtractor = subtractor   )
+    if ( verbose ) print("DF2x-end")
+    if ( verbose ) print( Sys.time() )
   }
   if ( ! missing( featureSubset ) ) {
     if ( verbose ) print("DF1-subset")
@@ -565,6 +571,7 @@ deepPatchMatch <- function(
   }
   if ( knnSpatial > 0 ) {
     if ( verbose ) print("spatial-distance-begin")
+    if ( verbose ) print( Sys.time() )
     fdistmat <- antsTransformIndexToPhysicalPoint(fixedImage,ffeatures$patchCoords)
     mdistmat <- antsTransformIndexToPhysicalPoint(movingImage,mfeatures$patchCoords)
 #    fdistmat <- ffeatures$patchCoords
@@ -583,10 +590,12 @@ deepPatchMatch <- function(
       t(fdistmat+jitterF), t(mdistmat+jitterM),
       k = knnSpatial, kmetric='euclidean', kPackage=kPackage)
     if ( verbose ) print("spatial-distance-end")
+    if ( verbose ) print( Sys.time() )
     # this will constrain the search
     spatialDistMat[ spatialDistMat > 0] = 1
   }
   if ( verbose ) print("sdxy-begin")
+  if ( verbose ) print( Sys.time() )
   matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
   matchesKNN = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
@@ -614,6 +623,7 @@ deepPatchMatch <- function(
     mydist = sparseDistanceMatrixXY(
       t(mfeatures$features), t(ffeatures$features), k = knn,
       kmetric='euclidean', kPackage = kPackage )
+    if ( verbose ) print( Sys.time() )
     if ( knnSpatial > 0 ) mydist = mydist * spatialDistMat
     best1s = qlcMatrix::rowMin( mydist, which = TRUE  )
     for ( k in 1:nrow(best1s$which) ) {
@@ -631,6 +641,7 @@ deepPatchMatch <- function(
     } # row
   } # else
   if ( verbose ) print("sdxy-fin")
+  if ( verbose ) print( Sys.time() )
   if ( knn > 1 ) {
     # if knn > 0 => make probabilities
     # (exp( -1.0 * (vv-min(vv))^2/ (mean(vv)*9) ))
@@ -760,7 +771,8 @@ deepLocalPatchMatch <- function(
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
 #' use the former for smaller patch sizes.
 #' @param vggmodel prebuilt feature model
-#' @param subtractor value to subtract when scaling image intensity
+#' @param subtractor value to subtract when scaling image intensity; should be
+#' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
@@ -777,7 +789,6 @@ deepFeatures <- function( x, mask, patchSize = 64,
   idim = x@dimension
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
-  if ( any( patchSize < 32 ) ) vggp = rep( 32, 2 )
   if ( missing( vggmodel ) ) {
     if ( idim == 2 ) {
       if ( block_name == 'block2_conv2' ) {
@@ -801,7 +812,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
       }
       vgg19 = application_vgg19(
           include_top = FALSE, weights = "imagenet",
-          input_shape = c( vggp, 3 ),
+          input_shape = list( NULL, NULL, 3 ),
           classes = 1000)
       if ( block_name == 'block2_conv2' )
         vggmodelRaw <- keras_model( inputs = vgg19$input,
@@ -856,11 +867,11 @@ deepFeatures <- function( x, mask, patchSize = 64,
       set_weights( vggmodel, vgg3Dweights )
     }
   } # exists vggmodel
-  x = iMath( x, "Normalize" ) * 255 - subtractor
+  x = iMath( x, "Normalize" ) * abs(subtractor*2) - subtractor
   patches0 = extractImagePatches( x, patchSize, maskImage = mask,
-    maxNumberOfPatches=sum(mask), returnAsArray = T, randomSeed = 1 )
+    maxNumberOfPatches=sum(mask), returnAsArray = T, randomSeed = 1, randomize=FALSE   )
   patchCoords = extractImagePatchCoordinates( x, patchSize, maskImage = mask,
-    maxNumberOfPatches=sum(mask), physicalCoordinates = FALSE, cornerCoordinates=TRUE, randomSeed = 1 )
+    maxNumberOfPatches=sum(mask), physicalCoordinates = FALSE, cornerCoordinates=TRUE, randomSeed = 1, randomize=FALSE   )
   patches = patches0
   if ( idim == 2 ) {
     for( k in 2:3 )
@@ -873,12 +884,13 @@ deepFeatures <- function( x, mask, patchSize = 64,
   if ( ! missing( featureSubset ) )
     if ( any( featureSubset > vecdim ) )
       featureSubset = featureSubset[ featureSubset <= vecdim ]
-  features = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
+  featuresMat = as.matrix( array( features,  dim = c( nrow( features), vecdim ) ) )
   if ( ! missing( featureSubset ) )
-    features = features[,featureSubset]
+    featuresMat = featuresMat[,featureSubset]
   return(
     list(
-      features=features,
+      features=featuresMat,
+      featuresRaw=features,
       patches=patches0,
       patchCoords = patchCoords + floor( patchSize / 2 - 1 ),
       featureModel = vggmodel ) )
@@ -1224,4 +1236,27 @@ for ( k in 1:nrow( matchObject$matches ) ) {
   }
 nna=!is.na( matchedPoints[,1] )
 return( list( fixedPoints=fixPoints[nna,], movingPoints=matchedPoints[nna,] ) )
+}
+
+
+
+
+
+#' Feature distance map
+#'
+#' @param image1 image 1
+#' @param image2 image 2
+#' @param jointMask mask covering features of both images
+#' @param patchSize patchSize for both images
+#' @return error map
+#'
+#' @export
+featureDistanceMap <- function( image1, image2, jointMask, patchSize=32 ) {
+  df1=deepFeatures(image1,jointMask,patchSize=patchSize)
+  df2=deepFeatures(image2,jointMask,patchSize=patchSize)
+  err = rep( NA, nrow( df2$features ) )
+  for ( k in 1:nrow(df2$features) ) {
+    err[k] = mean(df2$features[k,]-df1$features[k,])
+  }
+  return( makeImage( jointMask, err ) )
 }

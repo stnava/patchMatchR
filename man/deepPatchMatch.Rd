@@ -56,7 +56,8 @@ use the former for smaller patch sizes.}
 
 \item{vggmodel}{prebuilt feature model}
 
-\item{subtractor}{value to subtract when scaling image intensity}
+\item{subtractor}{value to subtract when scaling image intensity; should be
+chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.}
 
 \item{verbose}{boolean}
 }

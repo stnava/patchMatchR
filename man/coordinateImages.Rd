@@ -9,7 +9,7 @@ coordinateImages(mask, physicalCoordinates = TRUE)
 \arguments{
 \item{mask}{defining wherein we create coordinates}
 
-\item{physicalCoordinates}{select index or phyiscal coordinates}
+\item{physicalCoordinates}{boolean select index or phyiscal coordinates}
 }
 \value{
 list of coordinate images
