@@ -4,7 +4,7 @@
 \alias{featureDistanceMap}
 \title{Feature distance map}
 \usage{
-featureDistanceMap(image1, image2, jointMask, patchSize = 32)
+featureDistanceMap(image1, image2, jointMask, patchSize = 32, ...)
 }
 \arguments{
 \item{image1}{image 1}
@@ -14,6 +14,8 @@ featureDistanceMap(image1, image2, jointMask, patchSize = 32)
 \item{jointMask}{mask covering features of both images}
 
 \item{patchSize}{patchSize for both images}
+
+\item{...}{additional options to pass to deepFeatures e.g. vggmodel, block_name, substractor}
 }
 \value{
 error map

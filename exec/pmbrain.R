@@ -1,0 +1,48 @@
+Sys.setenv("TF_NUM_INTEROP_THREADS"=16)
+Sys.setenv("TF_NUM_INTRAOP_THREADS"=16)
+library( ANTsR )
+library( patchMatchR )
+library( ANTsRNet )
+# these images are in inst extdata
+img <- antsImageRead("1000_3.nii.gz") %>% iMath( "Normalize" ) %>% resampleImage( c( 2, 2, 2 ) )
+img2 <- antsImageRead("1017_3.nii.gz") %>% iMath( "Normalize" ) %>% resampleImage( c( 2, 2,2 ) )
+trans=antsRegistration( img, img2, "Translation")
+img2 = antsApplyTransforms( img, img2, trans$fwdtransforms, interpolator='nearestNeighbor')
+img2[55:128,1:128,1:144]=0
+plot(img2,axis=3)
+fm1=iMath(img*255, "Canny", 1.5, 10, 25 )
+fm2=iMath(img2*255, "Canny", 1.5, 10, 25 )
+
+fmdl = createResNetModel3D( list(NULL,NULL,NULL,1), lowestResolution=2,
+  mode='regression', numberOfClassificationLabels = 100 )
+fmdl = keras_model( fmdl$inputs, fmdl$layers[[38]]$output)
+print(fmdl)
+nP1 = 256
+nP2 = round( sum( fm2 == 1 ) )
+print( paste(nP1,nP2))
+set.seed( Sys.time())
+mask = randomMask( fm1, nP1 )
+mask2 = randomMask( fm2, nP2 )
+psz = 16
+print("Begin")
+match = deepPatchMatch( img2, img, mask2, mask, psz, psz,
+  block_name=50, knnSpatial=30, vggmodel=fmdl, subtractor=0.5 )
+mlm = matchedLandmarks( match, img, img2, c(psz,psz) )
+mpi1 = makePointsImage( mlm$fixedPoints, img*0+1, radius=3)
+mpi2 = makePointsImage( mlm$movingPoints, img2*0+1, radius=3)
+tx = fitTransformToPairedPoints( mlm$movingPoints, mlm$fixedPoints,"Affine" )
+warped = applyAntsrTransformToImage( tx$transform, img2, img, interpolation='nearestNeighbor' )
+print( paste( antsImageMutualInformation(img,img2),antsImageMutualInformation(img,warped) ))
+layout( matrix(1:3,nrow=1) )
+plot(img,mpi1)
+plot(img2,mpi2)
+plot(warped)
+print(sort(unique(mpi1)))
+# fm=featureDistanceMap( img2, img, getMask(img), block_name=2 )
+# plot( img,fm )
+
+antsImageWrite( img, '/tmp/a1.nii.gz' )
+antsImageWrite( mpi1, '/tmp/a2.nii.gz' )
+antsImageWrite( mpi2, '/tmp/b2.nii.gz' )
+antsImageWrite( img2, '/tmp/b1.nii.gz' )
+antsImageWrite( warped, '/tmp/w.nii.gz' )

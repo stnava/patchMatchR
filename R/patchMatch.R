@@ -1248,12 +1248,13 @@ return( list( fixedPoints=fixPoints[nna,], movingPoints=matchedPoints[nna,] ) )
 #' @param image2 image 2
 #' @param jointMask mask covering features of both images
 #' @param patchSize patchSize for both images
+#' @param ... additional options to pass to deepFeatures e.g. vggmodel, block_name, substractor
 #' @return error map
 #'
 #' @export
-featureDistanceMap <- function( image1, image2, jointMask, patchSize=32 ) {
-  df1=deepFeatures(image1,jointMask,patchSize=patchSize)
-  df2=deepFeatures(image2,jointMask,patchSize=patchSize)
+featureDistanceMap <- function( image1, image2, jointMask, patchSize=32, ... ) {
+  df1=deepFeatures(image1,jointMask,patchSize=patchSize, ... )
+  df2=deepFeatures(image2,jointMask,patchSize=patchSize, ... )
   err = rep( NA, nrow( df2$features ) )
   for ( k in 1:nrow(df2$features) ) {
     err[k] = mean(df2$features[k,]-df1$features[k,])
