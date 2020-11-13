@@ -1203,7 +1203,7 @@ RANSACAlt <- function(
       myFP)
     err = sqrt( rowMeans( ( myMP - mapComplement )^2 ) )
     nToSelect = nMax - nToTrim
-    inliers = order( err )[1:nToSelect]
+    inliers = sort( order( err )[1:nToSelect] )
     myFP = myFP[inliers,]
     myMP = myMP[inliers,]
     nMax = nrow( myFP )
