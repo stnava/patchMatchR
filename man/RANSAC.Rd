@@ -23,8 +23,7 @@ RANSAC(
 
 \item{transformType}{Affine, Rigid and Similarity currently supported}
 
-\item{minNtoFit}{the minimum number of data values required to fit the model.
-this value will be used at each iteration to fit the subset model.}
+\item{minNtoFit}{the minimum number of data values required to fit the model.}
 
 \item{maxIterations}{the maximum number of iterations allowed in the algorithm}
 

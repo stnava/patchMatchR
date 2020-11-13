@@ -3,6 +3,7 @@
 export(MSE)
 export(PSNR)
 export(RANSAC)
+export(RANSACAlt)
 export(SSIM)
 export(convertPatchCoordsToSpatialPoints)
 export(coordinateImages)

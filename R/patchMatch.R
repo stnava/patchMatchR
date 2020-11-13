@@ -873,7 +873,8 @@ deepFeatures <- function( x, mask, patchSize = 64,
   patchCoords = extractImagePatchCoordinates( x, patchSize, maskImage = mask,
     maxNumberOfPatches=sum(mask), physicalCoordinates = FALSE, cornerCoordinates=TRUE, randomSeed = 1, randomize=FALSE   )
   patches = patches0
-  if ( idim == 2 ) {
+  nChannels = unlist(dim(vggmodel$inputs[[1]]))
+  if ( idim == 2 & nChannels == 3 ) {
     for( k in 2:3 )
       patches = abind( patches, patches0, along = idim+2)
     } else {
@@ -1079,7 +1080,6 @@ fitTransformToPairedPointsTF <-function(
 #' @param fixedPoints fixed points matrix
 #' @param transformType Affine, Rigid and Similarity currently supported
 #' @param minNtoFit the minimum number of data values required to fit the model.
-#' this value will be used at each iteration to fit the subset model.
 #' @param maxIterations the maximum number of iterations allowed in the algorithm
 #' @param errorThreshold a threshold value for determining when a test data point fits a model.
 #' this parameter is set based on the standard deviation in the random subset model.
@@ -1156,6 +1156,65 @@ RANSAC <- function(
       finalModel=finalFit,
       bestModel=bestModel,
       inliers = fullInliers ) )
+}
+
+
+
+#' Alternative random sample consensus (RANSACAlt)
+#'
+#' @param movingPoints moving points matrix
+#' @param fixedPoints fixed points matrix
+#' @param transformType Affine, Rigid and Similarity currently supported
+#' @param nToTrim the number of points to throw away at each iteration
+#' @param minProportionPoints the minimum proportion of points to return
+#' @param lambda ridge penalty
+#' @param verbose boolean
+#'
+#' @return output list contains best fitted model, inliers, outliers
+#'
+#' @export
+RANSACAlt <- function(
+  fixedPoints,
+  movingPoints,
+  transformType = "Affine",
+  nToTrim = 2,
+  minProportionPoints = 0.5,
+  lambda = 1e-4,
+  verbose = FALSE ) {
+
+#   1 Initialize the set S   with all points
+#   2 Fit a line through the points in the set S
+#   3 Calculate distance between line and each sample in S
+#   4 Select the N    samples with the highest distance to the line, remove them from S
+#   5 Repeat step 2-4 until an error criterion (e.g. sum of all squared distances between the line and points in S
+#    S is below a certain threshold) is reached.
+
+  myFP = fixedPoints
+  myMP = movingPoints
+  nMax = nrow( myFP )
+  minn = round( minProportionPoints * nMax )
+  its = 0
+  while ( nMax >= minn  ) {
+    modelFit = fitTransformToPairedPoints(   # step 2
+      myMP,
+      myFP,
+      transformType = transformType, lambda = lambda )
+    mapComplement = applyAntsrTransformToPoint( modelFit$transform,
+      myFP)
+    err = sqrt( rowMeans( ( myMP - mapComplement )^2 ) )
+    nToSelect = nMax - nToTrim
+    inliers = order( err )[1:nToSelect]
+    myFP = myFP[inliers,]
+    myMP = myMP[inliers,]
+    nMax = nrow( myFP )
+    its = its + 1
+    if ( verbose ) print(paste(its,mean(err),nMax) )
+    }
+  return(
+    list(
+      finalModel=modelFit,
+      fixedPoints=myFP,
+      movingPoints = myMP ) )
 }
 
 
