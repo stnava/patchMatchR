@@ -9,7 +9,7 @@ RANSACAlt(
   movingPoints,
   transformType = "Affine",
   nToTrim = 2,
-  maxIterations = 20,
+  minProportionPoints = 0.5,
   lambda = 1e-04,
   verbose = FALSE
 )
@@ -23,7 +23,7 @@ RANSACAlt(
 
 \item{nToTrim}{the number of points to throw away at each iteration}
 
-\item{maxIterations}{the maximum number of iterations allowed in the algorithm}
+\item{minProportionPoints}{the minimum proportion of points to return}
 
 \item{lambda}{ridge penalty}
 
