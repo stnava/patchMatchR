@@ -1194,6 +1194,8 @@ RANSACAlt <- function(
   nMax = nrow( myFP )
   minn = round( minProportionPoints * nMax )
   its = 0
+  rejectFixedPoints = NULL
+  rejectMovingPoints = NULL
   while ( nMax >= minn  ) {
     modelFit = fitTransformToPairedPoints(   # step 2
       myMP,
@@ -1204,6 +1206,15 @@ RANSACAlt <- function(
     err = sqrt( rowMeans( ( myMP - mapComplement )^2 ) )
     nToSelect = nMax - nToTrim
     inliers = sort( order( err )[1:nToSelect] )
+    outliers = (1:nMax)[ -inliers ]
+    if ( is.null( rejectFixedPoints ) ) {
+      rejectFixedPoints=myFP[outliers,]
+      rejectMovingPoints=myFP[outliers,]
+    } else {
+      rejectFixedPoints=rbind( rejectFixedPoints, myFP[outliers,] )
+      rejectMovingPoints=rbind( rejectMovingPoints, myMP[outliers,] )
+    }
+
     myFP = myFP[inliers,]
     myMP = myMP[inliers,]
     nMax = nrow( myFP )
@@ -1214,7 +1225,9 @@ RANSACAlt <- function(
     list(
       finalModel=modelFit,
       fixedPoints=myFP,
-      movingPoints = myMP ) )
+      movingPoints = myMP,
+      rejectFixedPoints=rejectFixedPoints,
+      rejectMovingPoints=rejectMovingPoints ) )
 }
 
 
