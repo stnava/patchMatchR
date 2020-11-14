@@ -10,6 +10,7 @@ RANSACAlt(
   transformType = "Affine",
   nToTrim = 2,
   minProportionPoints = 0.5,
+  nCVGroups = 0,
   lambda = 1e-04,
   verbose = FALSE
 )
@@ -24,6 +25,8 @@ RANSACAlt(
 \item{nToTrim}{the number of points to throw away at each iteration}
 
 \item{minProportionPoints}{the minimum proportion of points to return}
+
+\item{nCVGroups}{number of cross-validation groups to determine error}
 
 \item{lambda}{ridge penalty}
 

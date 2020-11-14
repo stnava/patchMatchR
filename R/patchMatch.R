@@ -1167,6 +1167,7 @@ RANSAC <- function(
 #' @param transformType Affine, Rigid and Similarity currently supported
 #' @param nToTrim the number of points to throw away at each iteration
 #' @param minProportionPoints the minimum proportion of points to return
+#' @param nCVGroups number of cross-validation groups to determine error
 #' @param lambda ridge penalty
 #' @param verbose boolean
 #'
@@ -1179,6 +1180,7 @@ RANSACAlt <- function(
   transformType = "Affine",
   nToTrim = 2,
   minProportionPoints = 0.5,
+  nCVGroups = 0,
   lambda = 1e-4,
   verbose = FALSE ) {
 
@@ -1196,6 +1198,7 @@ RANSACAlt <- function(
   its = 0
   rejectFixedPoints = NULL
   rejectMovingPoints = NULL
+  bestErr = Inf
   while ( nMax >= minn  ) {
     modelFit = fitTransformToPairedPoints(   # step 2
       myMP,
@@ -1218,16 +1221,50 @@ RANSACAlt <- function(
     myFP = myFP[inliers,]
     myMP = myMP[inliers,]
     nMax = nrow( myFP )
+    nCVGroups = 8
+    if ( nCVGroups > 0 ) useCV = TRUE
+    cvErr = rep( NA, nCVGroups )
+    if ( useCV ) {
+      cvgroups = sample(c(1:nCVGroups),nrow( myFP ),replace=T)
+      group = 1
+      for ( group in 1:nCVGroups) {
+        tempfit = fitTransformToPairedPoints(
+          myMP[cvgroups!=group,],
+          myFP[cvgroups!=group,],
+          transformType = transformType, lambda = lambda )
+        tempcv = applyAntsrTransformToPoint( tempfit$transform,
+          myFP[cvgroups==group,])
+        cvErr[group] = sqrt( rowMeans( ( myMP[cvgroups==group,] - tempcv )^2 ) )
+        }
+      }
+    if ( useCV ) meanErr = mean( cvErr ) else meanErr = mean( err )
+    cvErr = mean( cvErr )
+    isBest = FALSE
+    if ( meanErr < bestErr ) {
+      bestErr = meanErr
+      bestFP = myFP
+      bestMP = myMP
+      bestRejectFixedPoints = rejectFixedPoints
+      bestRejectMovingPoints = rejectMovingPoints
+      isBest = TRUE
+      }
+    if ( verbose ) {
+      print( paste( "It:", its,
+        "mean(err):",mean(err),
+        "nMax:",nMax,
+        "cvErr:",cvErr,
+        "isBest:",isBest ) )
+      }
     its = its + 1
-    if ( verbose ) print(paste(its,mean(err),nMax) )
     }
   return(
     list(
       finalModel=modelFit,
-      fixedPoints=myFP,
-      movingPoints = myMP,
-      rejectFixedPoints=rejectFixedPoints,
-      rejectMovingPoints=rejectMovingPoints ) )
+      fixedPoints=bestFP,
+      movingPoints = bestMP,
+      rejectFixedPoints=bestRejectFixedPoints,
+      rejectMovingPoints=bestRejectMovingPoints,
+      bestErr=bestErr ) )
 }
 
 
