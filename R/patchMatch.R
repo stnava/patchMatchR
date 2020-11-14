@@ -1228,16 +1228,18 @@ RANSACAlt <- function(
       cvgroups = sample(c(1:nCVGroups),nrow( myFP ),replace=T)
       group = 1
       for ( group in 1:nCVGroups) {
-        tempfit = fitTransformToPairedPoints(
-          myMP[cvgroups!=group,],
-          myFP[cvgroups!=group,],
-          transformType = transformType, lambda = lambda )
-        tempcv = applyAntsrTransformToPoint( tempfit$transform,
-          myFP[cvgroups==group,])
-        cvErr[group] = sqrt( rowMeans( ( myMP[cvgroups==group,] - tempcv )^2 ) )
+        if ( sum( cvgroups==group ) > 1 ) {
+          tempfit = fitTransformToPairedPoints(
+            myMP[cvgroups!=group,],
+            myFP[cvgroups!=group,],
+            transformType = transformType, lambda = lambda )
+          tempcv = applyAntsrTransformToPoint( tempfit$transform,
+            myFP[cvgroups==group,])
+          cvErr[group] = sqrt( rowMeans( ( myMP[cvgroups==group,] - tempcv )^2 ) )
+          } else cvErr[group] = Inf
         }
       }
-    if ( useCV ) meanErr = mean( cvErr ) else meanErr = mean( err )
+    if ( useCV ) meanErr = mean( cvErr, na.rm=TRUE ) else meanErr = mean( err )
     cvErr = mean( cvErr )
     isBest = FALSE
     if ( meanErr < bestErr ) {
