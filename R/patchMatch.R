@@ -812,7 +812,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
       }
       vgg19 = application_vgg19(
           include_top = FALSE, weights = "imagenet",
-          input_shape = list( NULL, NULL, 3 ),
+          input_shape = list( 32, 32, 3 ),
           classes = 1000)
       if ( block_name == 'block2_conv2' )
         vggmodelRaw <- keras_model( inputs = vgg19$input,
@@ -826,7 +826,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
     if ( idim == 3 ) {
       vgg19 = application_vgg19(
         include_top = FALSE, weights = "imagenet",
-        input_shape = c( NULL, NULL, 3 ),
+        input_shape = c( 32, 32, 3 ),
         classes = 1000)
       if ( block_name == 'block2_conv2' )
         vggmodel2D <- keras_model( inputs = vgg19$input,
