@@ -12,6 +12,10 @@ RANSACAlt(
   minProportionPoints = 0.5,
   nCVGroups = 0,
   lambda = 1e-04,
+  domainImage = NULL,
+  numberOfFittingLevels = 6,
+  meshSize = 1,
+  dataWeights = NULL,
   verbose = FALSE
 )
 }
@@ -29,6 +33,15 @@ RANSACAlt(
 \item{nCVGroups}{number of cross-validation groups to determine error}
 
 \item{lambda}{ridge penalty}
+
+\item{domainImage}{image defining the domain for deformation maps.}
+
+\item{numberOfFittingLevels}{integer specifying the number of fitting levels.}
+
+\item{meshSize}{vector defining the mesh size at the initial fitting level.}
+
+\item{dataWeights}{vector defining the individual weighting of the corresponding
+scattered data value.  Default = NULL meaning all values are weighted the same.}
 
 \item{verbose}{boolean}
 }

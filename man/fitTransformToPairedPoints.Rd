@@ -8,7 +8,11 @@ fitTransformToPairedPoints(
   movingPoints,
   fixedPoints,
   transformType = "Affine",
-  lambda = 1e-04
+  lambda = 1e-04,
+  domainImage,
+  numberOfFittingLevels = 6,
+  meshSize = 1,
+  dataWeights
 )
 }
 \arguments{
@@ -19,11 +23,21 @@ fitTransformToPairedPoints(
 \item{transformType}{Affine, Rigid and Similarity currently supported}
 
 \item{lambda}{ridge penalty}
+
+\item{domainImage}{image defining the domain for deformation maps.}
+
+\item{numberOfFittingLevels}{integer specifying the number of fitting levels.}
+
+\item{meshSize}{vector defining the mesh size at the initial fitting level.}
+
+\item{dataWeights}{vector defining the individual weighting of the corresponding
+scattered data value.  Default = NULL meaning all values are weighted the same.
+Currently, this is only relevant to BSpline fits but FIXME will be generalized.}
 }
 \value{
 antsTransform that maps the moving image to the fixed image space.
-the inverse transform maps the moving points to the fixed space. associated
-error is also returned.'
+the inverse transform maps the moving points to the fixed space.  Associated
+error is also returned.
 }
 \description{
 This function will use either the Kabsch algorithm or a least squares fitting

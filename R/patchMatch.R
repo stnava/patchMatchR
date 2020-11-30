@@ -907,13 +907,24 @@ deepFeatures <- function( x, mask, patchSize = 64,
 #' @param fixedPoints fixed points matrix
 #' @param transformType Affine, Rigid and Similarity currently supported
 #' @param lambda ridge penalty
+#' @param domainImage image defining the domain for deformation maps.
+#' @param numberOfFittingLevels integer specifying the number of fitting levels.
+#' @param meshSize vector defining the mesh size at the initial fitting level.
+#' @param dataWeights vector defining the individual weighting of the corresponding
+#' scattered data value.  Default = NULL meaning all values are weighted the same.
+#' Currently, this is only relevant to BSpline fits but FIXME will be generalized.
 #' @return antsTransform that maps the moving image to the fixed image space.
-#' the inverse transform maps the moving points to the fixed space. associated
-#' error is also returned.'
+#' the inverse transform maps the moving points to the fixed space.  Associated
+#' error is also returned.
 #' @export
-fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
-  transformType = "Affine", lambda = 1e-4 ) {
-    if ( ! any( transformType %in% c( "Rigid", "Affine", "Similarity") ) )
+fitTransformToPairedPoints <-function(
+  movingPoints,
+  fixedPoints,
+  transformType = "Affine",
+  lambda = 1e-4,
+  domainImage, numberOfFittingLevels=4, meshSize=1, dataWeights
+ ) {
+    if ( ! any( transformType %in% c( "Rigid", "Affine", "Similarity", "BSpline" ) ) )
       stop("Transform not supported")
 ######################
 # x: fixedLandmarks
@@ -950,54 +961,70 @@ fitTransformToPairedPoints <-function( movingPoints, fixedPoints,
     }
   n = nrow( fixedPoints )
   idim = ncol( fixedPoints )
-  x = fixedPoints
-  y = movingPoints
+  if ( transformType %in% c( "Rigid", "Affine", "Similarity" ) ) {
+    x = fixedPoints
+    y = movingPoints
 
-  # 1. c = average of points of x
-  # 2. let y1 = y-c; x1 = x - c; x11 = [x1; 1 ... 1] # extend x11
-  centerX = colMeans( x )
-  centerY = colMeans( y )
-  for ( i in 1:nrow( x ) ) {
-    x[i,] = x[i,] - centerX
-    y[i,] = y[i,] - centerY
-    }
-  x11 = cbind( x, rep( 1, nrow(x)))
-  # 3. minimize (y1-A1*x11)^2, A1 is a 3*4 matrix
-  temp = qr.solve( x11, y )
-  A = t( temp[1:idim, 1:idim ] )
-  trans = temp[idim+1,] + centerY - centerX
-  if ( transformType %in% c("Rigid", "Similarity" ) ) {
-    # http://web.stanford.edu/class/cs273/refs/umeyama.pdf
-#    Kabsch Algorithm.
-    covmat = ( t( y ) %*% x )
-    x_svd <- svd( covmat  + diag(idim) * lambda)
-    myd = det( x_svd$u %*% t( x_svd$v ) )
-    signadj = diag( idim )
-    if ( myd > 0 ) A = x_svd$u %*% t( x_svd$v ) else {
-      signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
-      A = ( x_svd$u %*% signadj ) %*% t( x_svd$v )
-    }
-    scaling = 1
-    if ( transformType == "Similarity" ) {
-      scaling =  sqrt( mean( rowSums( y^2 )/n )  ) /
-                 sqrt( mean( rowSums( x^2 )/n )  )
+    # 1. c = average of points of x
+    # 2. let y1 = y-c; x1 = x - c; x11 = [x1; 1 ... 1] # extend x11
+    centerX = colMeans( x )
+    centerY = colMeans( y )
+    for ( i in 1:nrow( x ) ) {
+      x[i,] = x[i,] - centerX
+      y[i,] = y[i,] - centerY
       }
-    A = A %*% ( diag( idim ) * scaling )
-  }
-  aff = createAntsrTransform( matrix = A, translation = trans, dimension = idim,
-    center = centerX  )
-  if ( generateData ) {
-    aff = invertAntsrTransform( aff )
-    movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
-    movingPointsTx2 = applyAntsrTransformToPoint( trueTx, movingPoints )
-    print( paste( myd,
-      norm( movingPointsTx - fixedPoints, "F" ),
-      norm( movingPointsTx2 - fixedPoints, "F" ) ) )
-    } else {
-      err = norm( movingPoints - applyAntsrTransformToPoint( aff, fixedPoints ), "F" )
+    x11 = cbind( x, rep( 1, nrow(x)))
+    # 3. minimize (y1-A1*x11)^2, A1 is a 3*4 matrix
+    temp = qr.solve( x11, y )
+    A = t( temp[1:idim, 1:idim ] )
+    trans = temp[idim+1,] + centerY - centerX
+    if ( transformType %in% c("Rigid", "Similarity" ) ) {
+      # http://web.stanford.edu/class/cs273/refs/umeyama.pdf
+  #    Kabsch Algorithm.
+      covmat = ( t( y ) %*% x )
+      x_svd <- svd( covmat  + diag(idim) * lambda)
+      myd = det( x_svd$u %*% t( x_svd$v ) )
+      signadj = diag( idim )
+      if ( myd > 0 ) A = x_svd$u %*% t( x_svd$v ) else {
+        signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
+        A = ( x_svd$u %*% signadj ) %*% t( x_svd$v )
+      }
+      scaling = 1
+      if ( transformType == "Similarity" ) {
+        scaling =  sqrt( mean( rowSums( y^2 )/n )  ) /
+                   sqrt( mean( rowSums( x^2 )/n )  )
+        }
+      A = A %*% ( diag( idim ) * scaling )
     }
-  return( list( transform = aff, error = err/n ) )
+    aff = createAntsrTransform( matrix = A, translation = trans, dimension = idim,
+      center = centerX  )
+    if ( generateData ) {
+      aff = invertAntsrTransform( aff )
+      movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
+      movingPointsTx2 = applyAntsrTransformToPoint( trueTx, movingPoints )
+      print( paste( myd,
+        norm( movingPointsTx - fixedPoints, "F" ),
+        norm( movingPointsTx2 - fixedPoints, "F" ) ) )
+      } else {
+        err = norm( movingPoints - applyAntsrTransformToPoint( aff, fixedPoints ), "F" )
+      }
+    return( list( transform = aff, error = err/n ) )
+  }
+  if ( transformType == "BSpline" ) {
+    if ( length( meshSize ) == domainImage@dimension ) mymeshsize = meshSize
+    if ( length( meshSize ) == 1 ) mymeshsize = rep( meshSize, domainImage@dimension )
+    scatteredData = movingPoints - fixedPoints
+    bsplineImage <- fitBsplineObjectToScatteredData( scatteredData, fixedPoints,
+           parametricDomainOrigin = antsGetOrigin(domainImage),
+           parametricDomainSpacing = antsGetSpacing(domainImage),
+           parametricDomainSize = dim( domainImage ),
+           numberOfFittingLevels = numberOfFittingLevels, meshSize = mymeshsize )
+    tx = antsrTransformFromDisplacementField( bsplineImage )
+    err = norm( movingPoints - applyAntsrTransformToPoint( tx, fixedPoints ), "F" )
+    return( list( transform = tx, error = err/n, displacement=bsplineImage ) )
+  } else stop( "Invalid transformation type." )
 }
+
 
 
 
@@ -1169,6 +1196,11 @@ RANSAC <- function(
 #' @param minProportionPoints the minimum proportion of points to return
 #' @param nCVGroups number of cross-validation groups to determine error
 #' @param lambda ridge penalty
+#' @param domainImage image defining the domain for deformation maps.
+#' @param numberOfFittingLevels integer specifying the number of fitting levels.
+#' @param meshSize vector defining the mesh size at the initial fitting level.
+#' @param dataWeights vector defining the individual weighting of the corresponding
+#' scattered data value.  Default = NULL meaning all values are weighted the same.
 #' @param verbose boolean
 #'
 #' @return output list contains best fitted model, inliers, outliers
@@ -1182,6 +1214,7 @@ RANSACAlt <- function(
   minProportionPoints = 0.5,
   nCVGroups = 0,
   lambda = 1e-4,
+  domainImage=NULL, numberOfFittingLevels=4, meshSize=1, dataWeights=NULL,
   verbose = FALSE ) {
 
 #   1 Initialize the set S   with all points
@@ -1203,7 +1236,11 @@ RANSACAlt <- function(
     modelFit = fitTransformToPairedPoints(   # step 2
       myMP,
       myFP,
-      transformType = transformType, lambda = lambda )
+      transformType = transformType, lambda = lambda,
+      domainImage,
+      numberOfFittingLevels,
+      meshSize,
+      dataWeights )
     mapComplement = applyAntsrTransformToPoint( modelFit$transform,
       myFP)
     err = sqrt( rowMeans( ( myMP - mapComplement )^2 ) )
@@ -1232,7 +1269,11 @@ RANSACAlt <- function(
           tempfit = fitTransformToPairedPoints(
             myMP[cvgroups!=group,],
             myFP[cvgroups!=group,],
-            transformType = transformType, lambda = lambda )
+            transformType = transformType, lambda = lambda,
+            domainImage,
+            numberOfFittingLevels,
+            meshSize,
+            dataWeights )
           tempcv = applyAntsrTransformToPoint( tempfit$transform,
             myFP[cvgroups==group,])
           cvErr[group] = sqrt( rowMeans( ( myMP[cvgroups==group,] - tempcv )^2 ) )
