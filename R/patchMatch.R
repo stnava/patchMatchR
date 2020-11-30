@@ -1434,11 +1434,11 @@ deepLandmarkRegression <- function(
   activation = c("none","relu","trelu","softmax"),
   theta ) {
   if ( length( model$input_shape) == 5 ) {
-    targetDimensionality = 3
+    targetDimensionality = as.integer( 3 )
     coordConv <- layer_input(  list( NULL, NULL, NULL, targetDimensionality ) )
   }
   if ( length( model$input_shape) == 4 ) {
-    targetDimensionality = 2
+    targetDimensionality = as.integer( 2 )
     coordConv <- layer_input(  list( NULL, NULL, targetDimensionality ) )
   }
   nPoints = tail( unlist( model$output_shape ), 1 )
@@ -1456,7 +1456,6 @@ deepLandmarkRegression <- function(
       unet_output = unet$outputs[[1]] %>%
         layer_activation_thresholded_relu( theta = theta )
     }
-  targetDimensionality = length( coordConv )
   weightedRegressionList = tf$split( unet_output, as.integer(nPoints),
     axis=as.integer(targetDimensionality+1) )
   K <- keras::backend()
