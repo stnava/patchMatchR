@@ -13,7 +13,7 @@ RANSACAlt(
   nCVGroups = 0,
   lambda = 1e-04,
   domainImage = NULL,
-  numberOfFittingLevels = 6,
+  numberOfFittingLevels = 4,
   meshSize = 1,
   dataWeights = NULL,
   verbose = FALSE
