@@ -1431,7 +1431,7 @@ featureDistanceMap <- function( image1, image2, jointMask, patchSize=32, ... ) {
 #' @return the augmented model
 #'
 #' @export
-deepLandmarkRegression <- function(
+deepLandmarkRegressionWithHeatmaps <- function(
   model,
   activation = c("none","relu","trelu","softmax"),
   theta ) {
