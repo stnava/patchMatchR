@@ -1013,6 +1013,9 @@ fitTransformToPairedPoints <-function(
   if ( transformType == "BSpline" ) {
     if ( length( meshSize ) == domainImage@dimension ) mymeshsize = meshSize
     if ( length( meshSize ) == 1 ) mymeshsize = rep( meshSize, domainImage@dimension )
+    txfpts = fixedPoints
+    txmpts = movingPoints
+    mydir = antsGetDirection( )
     scatteredData = movingPoints - fixedPoints
     bsplineImage <- fitBsplineObjectToScatteredData( scatteredData, fixedPoints,
            parametricDomainOrigin = antsGetOrigin(domainImage),
@@ -1412,4 +1415,64 @@ featureDistanceMap <- function( image1, image2, jointMask, patchSize=32, ... ) {
     err[k] = mean(df2$features[k,]-df1$features[k,])
   }
   return( makeImage( jointMask, err ) )
+}
+
+
+
+
+
+#' Deep landmark regression stage
+#'
+#' @param model input deep model, presumably a unet
+#' @param activation the activation function for the regression maps
+#' @param theta the theta parameter for thresholded relu
+#' @return the augmented model
+#'
+#' @export
+deepLandmarkRegression <- function(
+  model,
+  activation = c("none","relu","trelu","softmax"),
+  theta ) {
+  if ( length( model$input_shape) == 5 ) {
+    targetDimensionality = 3
+    coordConv <- layer_input(  list( NULL, NULL, NULL, targetDimensionality ) )
+  }
+  if ( length( model$input_shape) == 4 ) {
+    targetDimensionality = 2
+    coordConv <- layer_input(  list( NULL, NULL, targetDimensionality ) )
+  }
+  nPoints = tail( unlist( model$output_shape ), 1 )
+  # perform soft thresholding to get positive component of unet output
+  if ( activation == 'none' ) {
+    unet_output = unet$outputs[[1]]
+  } else if ( activation == 'softmax') {
+    unet_output = unet$outputs[[1]] %>%
+      layer_activation_softmax()
+  } else {
+    if ( is.na( theta ) )
+      unet_output = unet$outputs[[1]] %>%
+        layer_activation_relu()
+    if ( ! is.na( theta ) )
+      unet_output = unet$outputs[[1]] %>%
+        layer_activation_thresholded_relu( theta = theta )
+    }
+  targetDimensionality = length( coordConv )
+  weightedRegressionList = tf$split( unet_output, as.integer(nPoints),
+    axis=as.integer(targetDimensionality+1) )
+  K <- keras::backend()
+  regressAxes = as.integer(1:(targetDimensionality+1))
+  regressAxes2 = as.integer(1:(targetDimensionality))
+  regPoints = list()
+  for ( k in 1:length(weightedRegressionList) ) {
+    # forced averaging function
+    weightedRegressionList[[k]] = weightedRegressionList[[k]] /
+      ( K$sum( weightedRegressionList[[k]], regressAxes, keepdims = TRUE ) + 1e-19 )
+    weightedRegressionList[[k]] =
+      layer_multiply( list( coordConv, weightedRegressionList[[k]] ), trainable = FALSE )
+    regPoints[[k]] = K$sum( weightedRegressionList[[k]], regressAxes2, keepdims = FALSE )
+    }
+  catout = layer_concatenate( regPoints, axis=1L ) %>%
+    layer_reshape( c( nPoints , targetDimensionality ))
+  keras_model( list( unet$inputs[[1]], coordConv), list( unet_output, catout  ) )
+  # pp=predict( temp, list( images, coordconvbatch ) ) => gives landmark coordinates
 }
