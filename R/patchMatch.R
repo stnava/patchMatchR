@@ -1013,15 +1013,15 @@ fitTransformToPairedPoints <-function(
   if ( transformType == "BSpline" ) {
     if ( length( meshSize ) == domainImage@dimension ) mymeshsize = meshSize
     if ( length( meshSize ) == 1 ) mymeshsize = rep( meshSize, domainImage@dimension )
-    txfpts = fixedPoints
-    txmpts = movingPoints
-    mydir = antsGetDirection( )
+    mydir = antsGetDirection( domainImage )
     scatteredData = movingPoints - fixedPoints
-    bsplineImage <- fitBsplineObjectToScatteredData( scatteredData, fixedPoints,
-           parametricDomainOrigin = antsGetOrigin(domainImage),
-           parametricDomainSpacing = antsGetSpacing(domainImage),
-           parametricDomainSize = dim( domainImage ),
-           numberOfFittingLevels = numberOfFittingLevels, meshSize = mymeshsize )
+    bsplineImage = fitBsplineDisplacementField(
+      displacementOrigins = fixedPoints, displacements = scatteredData,
+      origin = antsGetOrigin(domainImage),
+      spacing = antsGetSpacing( domainImage ),
+      size = dim( domainImage ),
+      direction = mydir,
+      numberOfFittingLevels = numberOfFittingLevels, meshSize = mymeshsize )
     tx = antsrTransformFromDisplacementField( bsplineImage )
     err = norm( movingPoints - applyAntsrTransformToPoint( tx, fixedPoints ), "F" )
     return( list( transform = tx, error = err/n, displacement=bsplineImage ) )
