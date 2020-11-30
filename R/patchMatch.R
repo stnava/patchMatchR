@@ -1421,9 +1421,11 @@ featureDistanceMap <- function( image1, image2, jointMask, patchSize=32, ... ) {
 
 
 
-#' Deep landmark regression stage
+#' Deep heatmap-based landmark regression stage
 #'
-#' @param model input deep model, presumably a unet
+#' @param model input deep model, presumably a unet.  it should have an input
+#' dimensionality that is dimension-appropriate.  the number of output channels
+#' should match the number of landmarks and should be an image.
 #' @param activation the activation function for the regression maps
 #' @param theta the theta parameter for thresholded relu
 #' @return the augmented model
@@ -1435,11 +1437,11 @@ deepLandmarkRegression <- function(
   theta ) {
   if ( length( model$input_shape) == 5 ) {
     targetDimensionality = as.integer( 3 )
-    coordConv <- layer_input(  list( NULL, NULL, NULL, targetDimensionality ) )
+    mycc <- layer_input(  list( NULL, NULL, NULL, targetDimensionality ) )
   }
   if ( length( model$input_shape) == 4 ) {
     targetDimensionality = as.integer( 2 )
-    coordConv <- layer_input(  list( NULL, NULL, targetDimensionality ) )
+    mycc <- layer_input(  list( NULL, NULL, targetDimensionality ) )
   }
   nPoints = tail( unlist( model$output_shape ), 1 )
   # perform soft thresholding to get positive component of unet output
@@ -1467,11 +1469,11 @@ deepLandmarkRegression <- function(
     weightedRegressionList[[k]] = weightedRegressionList[[k]] /
       ( K$sum( weightedRegressionList[[k]], regressAxes, keepdims = TRUE ) + 1e-19 )
     weightedRegressionList[[k]] =
-      layer_multiply( list( coordConv, weightedRegressionList[[k]] ), trainable = FALSE )
+      layer_multiply( list( mycc, weightedRegressionList[[k]] ), trainable = FALSE )
     regPoints[[k]] = K$sum( weightedRegressionList[[k]], regressAxes2, keepdims = FALSE )
     }
   catout = layer_concatenate( regPoints, axis=1L ) %>%
     layer_reshape( c( nPoints , targetDimensionality ))
-  keras_model( list( unet$inputs[[1]], coordConv), list( unet_output, catout  ) )
+  keras_model( list( unet$inputs[[1]], mycc), list( unet_output, catout  ) )
   # pp=predict( temp, list( images, coordconvbatch ) ) => gives landmark coordinates
 }
