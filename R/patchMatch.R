@@ -1261,7 +1261,6 @@ RANSACAlt <- function(
     myFP = myFP[inliers,]
     myMP = myMP[inliers,]
     nMax = nrow( myFP )
-    nCVGroups = 8
     if ( nCVGroups > 0 ) useCV = TRUE
     cvErr = rep( NA, nCVGroups )
     if ( useCV ) {
