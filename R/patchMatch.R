@@ -546,7 +546,7 @@ deepPatchMatch <- function(
       patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel,
       subtractor = subtractor    )
   }
-  if (  missing( vggmodel ) )  {
+  if (  missing( vggmodel ) & block_name != 'ripmmarc' )  {
     if ( verbose ) print("DF1")
     ffeatures = deepFeatures( fixedImage, fixedImageMask,
       patchSize = fixedPatchSize, block_name = block_name,
@@ -568,6 +568,23 @@ deepPatchMatch <- function(
     mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
       featureSubset = featureSubset, block_name = block_name, vggmodel=ffeatures$featureModel,
       subtractor = subtractor   )
+  }
+  if (  missing( vggmodel ) & block_name == 'ripmmarc' )  {
+    pr = round(min(fixedPatchSize)/2)
+    rotinv = FALSE
+    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr,
+      patchSamples=sum(fixedImageMask==1), patchVarEx=0.99, rotationInvariant = rotinv )
+    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr,
+      evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
+      patchSamples=sum(movingImageMask==1), rotationInvariant = rotinv )
+    coordF = getNeighborhoodInMask( fixedImage, fixedImageMask, rep(0,fixedImage@dimension),
+      spatial.info = TRUE, physical.coordinates=FALSE )
+    coordM = getNeighborhoodInMask( movingImage, movingImageMask, rep(0,movingImage@dimension),
+      spatial.info = TRUE, physical.coordinates=FALSE )
+    ffeatures = list( features=rippedF$evecCoeffs, patchCoords=coordF$indices )
+    mfeatures = list( features=rippedM$evecCoeffs, patchCoords=coordM$indices  )
+    if ( verbose ) print("RIP-end")
+    if ( verbose ) print( Sys.time() )
   }
   if ( knnSpatial > 0 ) {
     if ( verbose ) print("spatial-distance-begin")
@@ -596,10 +613,11 @@ deepPatchMatch <- function(
   }
   if ( verbose ) print("sdxy-begin")
   if ( verbose ) print( Sys.time() )
-  matches = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
-  costs = matrix( nrow = nrow( ffeatures$patches  ), ncol = 1 )
-  matchesKNN = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
-  costsKNN = matrix( nrow = nrow( ffeatures$patches  ), ncol = knn )
+  myn = nrow( ffeatures$features )
+  matches = matrix( nrow = myn , ncol = 1 )
+  costs = matrix( nrow = myn, ncol = 1 )
+  matchesKNN = matrix( nrow = myn, ncol = knn )
+  costsKNN = matrix( nrow = myn, ncol = knn )
   if ( switchMatchDirection ) {
     mydist = sparseDistanceMatrixXY(
       t(ffeatures$features), t(mfeatures$features), k = knn,
@@ -769,7 +787,7 @@ deepLocalPatchMatch <- function(
 #' @param patchSize vector or scalar defining patch dimensions
 #' @param featureSubset a vector that selects a subset of features
 #' @param block_name name of vgg feature block, either block2_conv2 or integer.
-#' use the former for smaller patch sizes.
+#' use the former for smaller patch sizes.  Or try ripmmarc.
 #' @param vggmodel prebuilt feature model
 #' @param subtractor value to subtract when scaling image intensity; should be
 #' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
@@ -789,7 +807,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
   idim = x@dimension
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
-  if ( missing( vggmodel ) ) {
+  if ( missing( vggmodel ) & block_name != 'ripmmarc' ) {
     if ( idim == 2 ) {
       if ( block_name == 'block2_conv2' ) {
         vggmodel = createFullyConvolutionalVggModel2D(
@@ -873,14 +891,22 @@ deepFeatures <- function( x, mask, patchSize = 64,
   patchCoords = extractImagePatchCoordinates( x, patchSize, maskImage = mask,
     maxNumberOfPatches=sum(mask), physicalCoordinates = FALSE, cornerCoordinates=TRUE, randomSeed = 1, randomize=FALSE   )
   patches = patches0
-  nChannels = unlist(dim(vggmodel$inputs[[1]]))
+  nChannels = 1
+  if ( ! missing( vggmodel ) & block_name != 'ripmmarc' )
+    nChannels = unlist(dim(vggmodel$inputs[[1]]))
   if ( idim == 2 & nChannels == 3 ) {
     for( k in 2:3 )
       patches = abind( patches, patches0, along = idim+2)
     } else {
       patches = array( patches, dim = c( dim( patches ), 1  ) )
     }
-  features = predict( vggmodel, patches )
+  if ( block_name != 'ripmmarc' ) {
+    features = predict( vggmodel, patches )
+  } else {
+    vggmodel <- ripmmarc( x, mask, patchRadius=min(patchSize)/2-1,
+        patchSamples=sum(mask), rotationInvariant = TRUE, patchVarEx=40 )
+    features = vggmodel$evecCoeffs
+  }
   vecdim = prod( dim( features )[-1]  )
   if ( ! missing( featureSubset ) )
     if ( any( featureSubset > vecdim ) )
@@ -905,7 +931,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
 #'
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
-#' @param transformType Affine, Rigid and Similarity currently supported
+#' @param transformType Rigid, Similarity, Affine and BSpline currently supported
 #' @param lambda ridge penalty
 #' @param domainImage image defining the domain for deformation maps.
 #' @param numberOfFittingLevels integer specifying the number of fitting levels.

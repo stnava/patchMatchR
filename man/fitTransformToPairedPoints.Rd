@@ -20,7 +20,7 @@ fitTransformToPairedPoints(
 
 \item{fixedPoints}{fixed points matrix}
 
-\item{transformType}{Affine, Rigid and Similarity currently supported}
+\item{transformType}{Rigid, Similarity, Affine and BSpline currently supported}
 
 \item{lambda}{ridge penalty}
 
