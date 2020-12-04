@@ -529,7 +529,7 @@ deepPatchMatch <- function(
   featureSubset,
   block_name = 'block2_conv2',
   switchMatchDirection = FALSE,
-  kPackage = 'FNN',
+  kPackage = 'RcppHNSW',
   vggmodel,
   subtractor = 127.5,
   verbose = FALSE )
@@ -571,10 +571,13 @@ deepPatchMatch <- function(
   }
   if (  missing( vggmodel ) & block_name == 'ripmmarc' )  {
     pr = round(min(fixedPatchSize)/2)
-    rotinv = FALSE
-    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr,
+    rotinv = TRUE
+    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=T,
       patchSamples=sum(fixedImageMask==1), patchVarEx=0.99, rotationInvariant = rotinv )
-    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr,
+    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=T,
+      evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
+      patchSamples=sum(fixedImageMask==1), rotationInvariant = rotinv )
+    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr, meanCenter=T,
       evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
       patchSamples=sum(movingImageMask==1), rotationInvariant = rotinv )
     coordF = getNeighborhoodInMask( fixedImage, fixedImageMask, rep(0,fixedImage@dimension),
@@ -723,7 +726,7 @@ deepLocalPatchMatch <- function(
   localSearchRadius = 5,
   nSamples,
   block_name = 'block2_conv2',
-  kPackage = 'FNN',
+  kPackage = 'RcppHNSW',
   verbose = FALSE )
 {
   ffeatures = deepFeatures( fixedImage, fixedImageMask,
