@@ -16,9 +16,10 @@ deepPatchMatch(
   featureSubset,
   block_name = "block2_conv2",
   switchMatchDirection = FALSE,
-  kPackage = "FNN",
+  kPackage = "RcppHNSW",
   vggmodel,
   subtractor = 127.5,
+  patchVarEx = 0.95,
   verbose = FALSE
 )
 }
@@ -58,6 +59,8 @@ use the former for smaller patch sizes.}
 
 \item{subtractor}{value to subtract when scaling image intensity; should be
 chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.}
+
+\item{patchVarEx}{patch variance explained for ripmmarc}
 
 \item{verbose}{boolean}
 }

@@ -14,7 +14,7 @@ deepLocalPatchMatch(
   localSearchRadius = 5,
   nSamples,
   block_name = "block2_conv2",
-  kPackage = "FNN",
+  kPackage = "RcppHNSW",
   verbose = FALSE
 )
 }

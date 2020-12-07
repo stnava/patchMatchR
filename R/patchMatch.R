@@ -460,6 +460,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #' @param vggmodel prebuilt feature model
 #' @param subtractor value to subtract when scaling image intensity; should be
 #' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
+#' @param patchVarEx patch variance explained for ripmmarc
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -532,6 +533,7 @@ deepPatchMatch <- function(
   kPackage = 'RcppHNSW',
   vggmodel,
   subtractor = 127.5,
+  patchVarEx = 0.95,
   verbose = FALSE )
 {
   if ( verbose ) print( Sys.time() )
@@ -572,14 +574,15 @@ deepPatchMatch <- function(
   if (  missing( vggmodel ) & block_name == 'ripmmarc' )  {
     pr = round(min(fixedPatchSize)/2)
     rotinv = TRUE
-    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=T,
-      patchSamples=sum(fixedImageMask==1), patchVarEx=0.99, rotationInvariant = rotinv )
-    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=T,
+    mymc = FALSE
+    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=mymc,
+      patchSamples=sum(fixedImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
+    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=mymc,
       evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
-      patchSamples=sum(fixedImageMask==1), rotationInvariant = rotinv )
-    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr, meanCenter=T,
+      patchSamples=sum(fixedImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
+    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr, meanCenter=mymc,
       evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
-      patchSamples=sum(movingImageMask==1), rotationInvariant = rotinv )
+      patchSamples=sum(movingImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
     coordF = getNeighborhoodInMask( fixedImage, fixedImageMask, rep(0,fixedImage@dimension),
       spatial.info = TRUE, physical.coordinates=FALSE )
     coordM = getNeighborhoodInMask( movingImage, movingImageMask, rep(0,movingImage@dimension),
@@ -794,6 +797,7 @@ deepLocalPatchMatch <- function(
 #' @param vggmodel prebuilt feature model
 #' @param subtractor value to subtract when scaling image intensity; should be
 #' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
+#' @param patchVarEx patch variance explained for ripmmarc
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
@@ -806,7 +810,7 @@ deepLocalPatchMatch <- function(
 #' @export deepFeatures
 deepFeatures <- function( x, mask, patchSize = 64,
   featureSubset, block_name = 'block2_conv2', vggmodel,
-  subtractor = 127.5 ) {
+  subtractor = 127.5, patchVarEx = 0.95 ) {
   idim = x@dimension
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
@@ -906,8 +910,8 @@ deepFeatures <- function( x, mask, patchSize = 64,
   if ( block_name != 'ripmmarc' ) {
     features = predict( vggmodel, patches )
   } else {
-    vggmodel <- ripmmarc( x, mask, patchRadius=min(patchSize)/2-1,
-        patchSamples=sum(mask), rotationInvariant = TRUE, patchVarEx=40 )
+    vggmodel <- ripmmarc( x, mask, patchRadius=min(patchSize)/2-1, meanCenter=FALSE,
+        patchSamples=sum(mask), rotationInvariant = TRUE, patchVarEx=patchVarEx )
     features = vggmodel$evecCoeffs
   }
   vecdim = prod( dim( features )[-1]  )
@@ -1260,11 +1264,12 @@ RANSACAlt <- function(
   myMP = movingPoints
   nMax = nrow( myFP )
   minn = round( minProportionPoints * nMax )
+  if ( minn < 8 ) minn = 8
   its = 0
   rejectFixedPoints = NULL
   rejectMovingPoints = NULL
   bestErr = Inf
-  while ( nMax >= minn  ) {
+  while ( nMax >= minn ) {
     modelFit = fitTransformToPairedPoints(   # step 2
       myMP,
       myFP,
@@ -1291,7 +1296,7 @@ RANSACAlt <- function(
     myMP = myMP[inliers,]
     nMax = nrow( myFP )
     if ( nCVGroups > 0 ) useCV = TRUE
-    if ( useCV ) {
+    if ( useCV & ! is.null( nMax ) ) {
       cvgroups = sample(c(1:nCVGroups),nrow( myFP ),replace=T)
       cvErr = rep( 0, nCVGroups )
       group = 1

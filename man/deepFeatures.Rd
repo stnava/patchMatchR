@@ -11,7 +11,8 @@ deepFeatures(
   featureSubset,
   block_name = "block2_conv2",
   vggmodel,
-  subtractor = 127.5
+  subtractor = 127.5,
+  patchVarEx = 0.95
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ use the former for smaller patch sizes.  Or try ripmmarc.}
 
 \item{subtractor}{value to subtract when scaling image intensity; should be
 chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.}
+
+\item{patchVarEx}{patch variance explained for ripmmarc}
 }
 \value{
 feature array, patches and patch coordinates
