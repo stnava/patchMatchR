@@ -12,7 +12,8 @@ deepFeatures(
   block_name = "block2_conv2",
   vggmodel,
   subtractor = 127.5,
-  patchVarEx = 0.95
+  patchVarEx = 0.95,
+  meanCenter = FALSE
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ use the former for smaller patch sizes.  Or try ripmmarc.}
 chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.}
 
 \item{patchVarEx}{patch variance explained for ripmmarc}
+
+\item{meanCenter}{boolean mean center the patch for ripmmarc}
 }
 \value{
 feature array, patches and patch coordinates

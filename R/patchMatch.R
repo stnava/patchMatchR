@@ -461,6 +461,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #' @param subtractor value to subtract when scaling image intensity; should be
 #' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
 #' @param patchVarEx patch variance explained for ripmmarc
+#' @param meanCenter boolean to mean center each patch for ripmmarc
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -534,6 +535,7 @@ deepPatchMatch <- function(
   vggmodel,
   subtractor = 127.5,
   patchVarEx = 0.95,
+  meanCenter = FALSE,
   verbose = FALSE )
 {
   if ( verbose ) print( Sys.time() )
@@ -574,13 +576,12 @@ deepPatchMatch <- function(
   if (  missing( vggmodel ) & block_name == 'ripmmarc' )  {
     pr = round(min(fixedPatchSize)/2)
     rotinv = TRUE
-    mymc = FALSE
-    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=mymc,
+    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=meanCenter,
       patchSamples=sum(fixedImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
-    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=mymc,
+    rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=meanCenter,
       evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
       patchSamples=sum(fixedImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
-    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr, meanCenter=mymc,
+    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr, meanCenter=meanCenter,
       evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
       patchSamples=sum(movingImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
     coordF = getNeighborhoodInMask( fixedImage, fixedImageMask, rep(0,fixedImage@dimension),
@@ -798,6 +799,7 @@ deepLocalPatchMatch <- function(
 #' @param subtractor value to subtract when scaling image intensity; should be
 #' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
 #' @param patchVarEx patch variance explained for ripmmarc
+#' @param meanCenter boolean mean center the patch for ripmmarc
 #' @return feature array, patches and patch coordinates
 #' @author Avants BB
 #' @examples
@@ -810,7 +812,7 @@ deepLocalPatchMatch <- function(
 #' @export deepFeatures
 deepFeatures <- function( x, mask, patchSize = 64,
   featureSubset, block_name = 'block2_conv2', vggmodel,
-  subtractor = 127.5, patchVarEx = 0.95 ) {
+  subtractor = 127.5, patchVarEx = 0.95, meanCenter=FALSE ) {
   idim = x@dimension
   if ( length( patchSize ) == 1 ) patchSize = rep( patchSize, idim )
   vggp = patchSize
@@ -910,7 +912,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
   if ( block_name != 'ripmmarc' ) {
     features = predict( vggmodel, patches )
   } else {
-    vggmodel <- ripmmarc( x, mask, patchRadius=min(patchSize)/2-1, meanCenter=FALSE,
+    vggmodel <- ripmmarc( x, mask, patchRadius=min(patchSize)/2-1, meanCenter=meanCenter,
         patchSamples=sum(mask), rotationInvariant = TRUE, patchVarEx=patchVarEx )
     features = vggmodel$evecCoeffs
   }

@@ -20,6 +20,7 @@ deepPatchMatch(
   vggmodel,
   subtractor = 127.5,
   patchVarEx = 0.95,
+  meanCenter = FALSE,
   verbose = FALSE
 )
 }
@@ -61,6 +62,8 @@ use the former for smaller patch sizes.}
 chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.}
 
 \item{patchVarEx}{patch variance explained for ripmmarc}
+
+\item{meanCenter}{boolean to mean center each patch for ripmmarc}
 
 \item{verbose}{boolean}
 }
