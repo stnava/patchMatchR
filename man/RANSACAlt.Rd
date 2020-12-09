@@ -11,7 +11,7 @@ RANSACAlt(
   nToTrim = 2,
   minProportionPoints = 0.5,
   nCVGroups = 0,
-  lambda = 1e-04,
+  lambda = 1e-08,
   domainImage = NULL,
   numberOfFittingLevels = 4,
   meshSize = 1,
@@ -26,13 +26,15 @@ RANSACAlt(
 
 \item{transformType}{Affine, Rigid and Similarity currently supported}
 
-\item{nToTrim}{the number of points to throw away at each iteration}
+\item{nToTrim}{the number of points to throw away at each iteration; if this
+is a two-vector then we will sample values between these; can be used to
+accelerate the search with a higher number earlier.}
 
 \item{minProportionPoints}{the minimum proportion of points to return}
 
 \item{nCVGroups}{number of cross-validation groups to determine error}
 
-\item{lambda}{ridge penalty}
+\item{lambda}{ridge penalty in zero to one}
 
 \item{domainImage}{image defining the domain for deformation maps.}
 

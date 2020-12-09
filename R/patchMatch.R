@@ -941,7 +941,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
 #' @param transformType Rigid, Similarity, Affine and BSpline currently supported
-#' @param lambda ridge penalty
+#' @param lambda ridge penalty in zero to one interval
 #' @param domainImage image defining the domain for deformation maps.
 #' @param numberOfFittingLevels integer specifying the number of fitting levels.
 #' @param meshSize vector defining the mesh size at the initial fitting level.
@@ -956,11 +956,29 @@ fitTransformToPairedPoints <-function(
   movingPoints,
   fixedPoints,
   transformType = "Affine",
-  lambda = 1e-4,
-  domainImage, numberOfFittingLevels=4, meshSize=1, dataWeights
- ) {
-    if ( ! any( transformType %in% c( "Rigid", "Affine", "Similarity", "BSpline" ) ) )
+  lambda = 1e-8,
+  domainImage,
+  numberOfFittingLevels=4,
+  meshSize=1,
+  dataWeights )
+  {
+  verbose=FALSE
+  transformType = tolower( transformType )
+  if ( ! any( transformType %in%
+    c( "rigid", "affine", "similarity", "bspline" ) ) )
       stop("Transform not supported")
+  if ( lambda > 1 ) lambda = 1
+  if ( lambda < 0 ) lambda = 0
+  polarX <- function(X) {
+      x_svd <- svd(X)
+      P <- x_svd$u %*% diag(x_svd$d) %*% t(x_svd$u)
+      Z <- x_svd$u %*% t(x_svd$v)
+      if (det(Z) < 0)
+        Z = Z * (-1)
+      return(list(P = P, Z = Z, Xtilde = P %*% Z))
+      }
+
+
 ######################
 # x: fixedLandmarks
 # y: movingLandmarks
@@ -977,29 +995,24 @@ fitTransformToPairedPoints <-function(
   # https://github.com/ANTsX/ANTs/blob/3f3cd4b775036345a28898ca9fe5a56f04ed4973/Examples/ANTSUseLandmarkImagesToGetAffineTransform.cxx#L84-L180
   generateData = FALSE
   if ( generateData ) {
-    img = ri( 1 )
-    antsSetSpacing( img, rep( 0.8 , 2 ) )
-    img2 = ri( 5 )
-    aff = antsRegistration( img, img2, "Affine" )
-    trueTx = readAntsrTransform( aff$fwdtransforms )
-    trueTx = invertAntsrTransform( trueTx )
-    fixedParams = getAntsrTransformFixedParameters( trueTx )
+    vals=c(28.12101,-24.11743,-3.967929, -23.28178, 12.08869, 20.90748, -19.5862, 4.428042, -29.77451, -55.25124, -26.70918, -4.746233, 4.273091, -33.04488, -4.588739, 23.55226, 20.82326, 8.31129, 20.58791, -4.237536)
+    vals = vals - min(vals) + 10
+    fixedPoints = matrix( vals, nrow=10, ncol = 2 )
+    rotation = matrix( c(-0.2771307,-0.9608322, 0.9608322 ,-0.2771307),ncol=2)
+    scaleShear = matrix( c(1.1,0.1,0.02,-0.9) ,nrow=2) # with reflection
+    scaleShear = matrix( c(1.1,0.1,0.02,0.9) ,nrow=2)
+    simaff = scaleShear %*% rotation
+    trueTx = createAntsrTransform( matrix = simaff, translation = c(10,10),
+      dimension = 2, center = c(5,5)  )
+    movingPoints = applyAntsrTransformToPoint( trueTx, fixedPoints)
+    trueTxInv = invertAntsrTransform( trueTx )
     txParams = getAntsrTransformParameters( trueTx )
-    # find some fixed and moving points
-    msk = getMask( img )
-    rmsk = randomMask( msk, 555 ) %>% labelClusters( 1 ) %>% iMath("GD",2)
-    rmskTx = antsApplyTransforms( img2, rmsk, transformlist = aff$fwdtransforms,
-      whichtoinvert = c(TRUE), interpolator = 'nearestNeighbor' )
-    fixedPoints = getCentroids( rmsk )[,1:2]
-    movingPoints = getCentroids( rmskTx )[,1:2]
-    movingPoints2 = applyAntsrTransformToPoint( trueTx, fixedPoints )
     }
   n = nrow( fixedPoints )
   idim = ncol( fixedPoints )
-  if ( transformType %in% c( "Rigid", "Affine", "Similarity" ) ) {
+  if ( transformType %in% c( "rigid", "affine", "similarity" ) ) {
     x = fixedPoints
     y = movingPoints
-
     # 1. c = average of points of x
     # 2. let y1 = y-c; x1 = x - c; x11 = [x1; 1 ... 1] # extend x11
     centerX = colMeans( x )
@@ -1008,16 +1021,23 @@ fitTransformToPairedPoints <-function(
       x[i,] = x[i,] - centerX
       y[i,] = y[i,] - centerY
       }
-    x11 = cbind( x, rep( 1, nrow(x)))
+#    if ( transformType == "affine" ) {
+    if ( TRUE ) {
+      x11 = cbind( x, rep( 1, nrow(x)))
     # 3. minimize (y1-A1*x11)^2, A1 is a 3*4 matrix
-    temp = qr.solve( x11, y )
-    A = t( temp[1:idim, 1:idim ] )
-    trans = temp[idim+1,] + centerY - centerX
-    if ( transformType %in% c("Rigid", "Similarity" ) ) {
+      x11b = t( x11 ) %*% x11
+      yb = t( x11 ) %*% y
+      yprior = cbind( y, rep( 1, nrow(y)))
+      temp = qr.solve( x11* ( 1.0 - lambda ) + lambda * yprior, y )
+      A = polarX( t( temp[1:idim, 1:idim ] ) )$Xtilde # resolve reflection issues
+#      A = t( temp[1:idim, 1:idim ] ) # no reflection fix
+      trans = temp[idim+1,] + centerY - centerX
+    } else trans = rep( 0, idim )
+    if ( transformType %in% c("rigid", "similarity" ) ) {
       # http://web.stanford.edu/class/cs273/refs/umeyama.pdf
   #    Kabsch Algorithm.
       covmat = ( t( y ) %*% x )
-      x_svd <- svd( covmat  + diag(idim) * lambda)
+      x_svd <- svd( covmat * ( 1.0 - lambda )  + diag(idim) * lambda)
       myd = det( x_svd$u %*% t( x_svd$v ) )
       signadj = diag( idim )
       if ( myd > 0 ) A = x_svd$u %*% t( x_svd$v ) else {
@@ -1025,7 +1045,7 @@ fitTransformToPairedPoints <-function(
         A = ( x_svd$u %*% signadj ) %*% t( x_svd$v )
       }
       scaling = 1
-      if ( transformType == "Similarity" ) {
+      if ( transformType == "similarity" ) {
         scaling =  sqrt( mean( rowSums( y^2 )/n )  ) /
                    sqrt( mean( rowSums( x^2 )/n )  )
         }
@@ -1033,19 +1053,25 @@ fitTransformToPairedPoints <-function(
     }
     aff = createAntsrTransform( matrix = A, translation = trans, dimension = idim,
       center = centerX  )
-    if ( generateData ) {
-      aff = invertAntsrTransform( aff )
-      movingPointsTx = applyAntsrTransformToPoint( aff, movingPoints )
-      movingPointsTx2 = applyAntsrTransformToPoint( trueTx, movingPoints )
-      print( paste( myd,
-        norm( movingPointsTx - fixedPoints, "F" ),
-        norm( movingPointsTx2 - fixedPoints, "F" ) ) )
-      } else {
-        err = norm( movingPoints - applyAntsrTransformToPoint( aff, fixedPoints ), "F" )
+    if ( generateData & verbose ) {
+      print("TRUPARAM")
+      print( txParams )
+      print("ESTPARAM")
+      print( getAntsrTransformParameters( aff ))
+      print("Result")
+        print("FIX")
+        print( head( fixedPoints ))
+        print("FIXW")
+        print( head( applyAntsrTransformToPoint( aff, fixedPoints ) ))
+        print("MOV")
+        print( head( movingPoints ))
       }
+
+    err = norm( movingPoints - applyAntsrTransformToPoint( aff, fixedPoints ), "F" )
+
     return( list( transform = aff, error = err/n ) )
   }
-  if ( transformType == "BSpline" ) {
+  if ( transformType == "bspline" ) {
     if ( length( meshSize ) == domainImage@dimension ) mymeshsize = meshSize
     if ( length( meshSize ) == 1 ) mymeshsize = rep( meshSize, domainImage@dimension )
     mydir = antsGetDirection( domainImage )
@@ -1153,7 +1179,7 @@ fitTransformToPairedPointsTF <-function(
 #' @param goodProportion the fraction of close data values required to assert that a model
 #' fits well to data.  that is, if equal to 0.5, then one would need 50 points to
 #' assert that a model fit is good if the whole dataset contains 100 points.
-#' @param lambda ridge penalty
+#' @param lambda ridge penalty in zero to one
 #' @param verbose boolean
 #'
 #' @return output list contains best fitted model, inliers, outliers
@@ -1167,7 +1193,7 @@ RANSAC <- function(
   maxIterations = 20,
   errorThreshold = 1,
   goodProportion = 0.5,
-  lambda = 1e-4,
+  lambda = 1e-8,
   verbose = FALSE ) {
   # 1 Select a random subset of the original data. Call this subset the hypothetical inliers.
   # 2 A model is fitted to the set of hypothetical inliers.
@@ -1230,10 +1256,12 @@ RANSAC <- function(
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
 #' @param transformType Affine, Rigid and Similarity currently supported
-#' @param nToTrim the number of points to throw away at each iteration
+#' @param nToTrim the number of points to throw away at each iteration; if this
+#' is a two-vector then we will sample values between these; can be used to
+#' accelerate the search with a higher number earlier.
 #' @param minProportionPoints the minimum proportion of points to return
 #' @param nCVGroups number of cross-validation groups to determine error
-#' @param lambda ridge penalty
+#' @param lambda ridge penalty in zero to one
 #' @param domainImage image defining the domain for deformation maps.
 #' @param numberOfFittingLevels integer specifying the number of fitting levels.
 #' @param meshSize vector defining the mesh size at the initial fitting level.
@@ -1251,7 +1279,7 @@ RANSACAlt <- function(
   nToTrim = 2,
   minProportionPoints = 0.5,
   nCVGroups = 0,
-  lambda = 1e-4,
+  lambda = 1e-8,
   domainImage=NULL, numberOfFittingLevels=4, meshSize=1, dataWeights=NULL,
   verbose = FALSE ) {
 
@@ -1264,14 +1292,20 @@ RANSACAlt <- function(
 
   myFP = fixedPoints
   myMP = movingPoints
+  oMax = nrow( myFP )
   nMax = nrow( myFP )
   minn = round( minProportionPoints * nMax )
-  if ( minn < 8 ) minn = 8
+  idim = ncol( myFP )
+  if ( minn < (idim*2 + min(nToTrim) ) ) minn = idim*2 + min(nToTrim)
   its = 0
   rejectFixedPoints = NULL
   rejectMovingPoints = NULL
   bestErr = Inf
   while ( nMax >= minn ) {
+    nToTrimLocal = min(nToTrim)
+    if ( length( nToTrim ) > 1 )
+      nToTrimLocal = round(
+        min(nToTrim) + ( max(nToTrim) - min( nToTrim ) ) * nMax/oMax )^2
     modelFit = fitTransformToPairedPoints(   # step 2
       myMP,
       myFP,
@@ -1283,7 +1317,7 @@ RANSACAlt <- function(
     mapComplement = applyAntsrTransformToPoint( modelFit$transform,
       myFP)
     err = sqrt( rowMeans( ( myMP - mapComplement )^2 ) )
-    nToSelect = nMax - nToTrim
+    nToSelect = nMax - nToTrimLocal
     inliers = sort( order( err )[1:nToSelect] )
     outliers = (1:nMax)[ -inliers ]
     if ( is.null( rejectFixedPoints ) ) {

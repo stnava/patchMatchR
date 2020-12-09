@@ -8,7 +8,7 @@ fitTransformToPairedPoints(
   movingPoints,
   fixedPoints,
   transformType = "Affine",
-  lambda = 1e-04,
+  lambda = 1e-08,
   domainImage,
   numberOfFittingLevels = 4,
   meshSize = 1,
@@ -22,7 +22,7 @@ fitTransformToPairedPoints(
 
 \item{transformType}{Rigid, Similarity, Affine and BSpline currently supported}
 
-\item{lambda}{ridge penalty}
+\item{lambda}{ridge penalty in zero to one interval}
 
 \item{domainImage}{image defining the domain for deformation maps.}
 

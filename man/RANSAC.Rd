@@ -12,7 +12,7 @@ RANSAC(
   maxIterations = 20,
   errorThreshold = 1,
   goodProportion = 0.5,
-  lambda = 1e-04,
+  lambda = 1e-08,
   verbose = FALSE
 )
 }
@@ -36,7 +36,7 @@ of values between mean error plus or minus sd error times errorThreshold.}
 fits well to data.  that is, if equal to 0.5, then one would need 50 points to
 assert that a model fit is good if the whole dataset contains 100 points.}
 
-\item{lambda}{ridge penalty}
+\item{lambda}{ridge penalty in zero to one}
 
 \item{verbose}{boolean}
 }
