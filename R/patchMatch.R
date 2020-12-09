@@ -1303,9 +1303,11 @@ RANSACAlt <- function(
   bestErr = Inf
   while ( nMax >= minn ) {
     nToTrimLocal = min(nToTrim)
-    if ( length( nToTrim ) > 1 )
+    if ( length( nToTrim ) > 1 ) {
       nToTrimLocal = round(
         min(nToTrim) + ( max(nToTrim) - min( nToTrim ) ) * nMax/oMax )^2
+      if ( nToTrimLocal > 0.5 * nMax ) nToTrimLocal=round(0.5*nMax)
+      }
     modelFit = fitTransformToPairedPoints(   # step 2
       myMP,
       myFP,
