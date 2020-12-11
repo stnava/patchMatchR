@@ -1507,11 +1507,19 @@ deepLandmarkRegressionWithHeatmaps <- function(
   model,
   activation = c("none","relu","trelu","softmax"),
   theta ) {
-  if ( length( model$input_shape) == 5 ) {
+  multiInput = FALSE
+  if ( length( model$inputs ) == 1 ) {
+    theshaper = length( model$input_shape )
+  }
+  if ( length( model$inputs ) > 1 ) {
+    theshaper = length( model$input_shape[[1]] )
+    multiInput = TRUE
+  }
+  if ( theshaper == 5 ) {
     targetDimensionality = as.integer( 3 )
     mycc <- layer_input(  list( NULL, NULL, NULL, targetDimensionality ) )
   }
-  if ( length( model$input_shape) == 4 ) {
+  if ( theshaper == 4 ) {
     targetDimensionality = as.integer( 2 )
     mycc <- layer_input(  list( NULL, NULL, targetDimensionality ) )
   }
@@ -1546,6 +1554,14 @@ deepLandmarkRegressionWithHeatmaps <- function(
     }
   catout = layer_concatenate( regPoints, axis=1L ) %>%
     layer_reshape( c( nPoints , targetDimensionality ))
-  keras_model( list( unet$inputs[[1]], mycc), list( unet_output, catout  ) )
-  # pp=predict( temp, list( images, coordconvbatch ) ) => gives landmark coordinates
+  if ( ! multiInput )
+    return(
+      keras_model(
+        list( unet$inputs[[1]], mycc), list( unet_output, catout  ) )
+      )
+  if ( ! multiInput )
+    return(
+      keras_model(
+        lappend( unet$inputs, mycc ), list( unet_output, catout  ) )
+      )
 }
