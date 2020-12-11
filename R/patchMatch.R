@@ -1559,7 +1559,7 @@ deepLandmarkRegressionWithHeatmaps <- function(
       keras_model(
         list( unet$inputs[[1]], mycc), list( unet_output, catout  ) )
       )
-  if ( ! multiInput )
+  if ( multiInput )
     return(
       keras_model(
         lappend( unet$inputs, mycc ), list( unet_output, catout  ) )
