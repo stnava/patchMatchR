@@ -970,12 +970,15 @@ fitTransformToPairedPoints <-function(
   if ( lambda > 1 ) lambda = 1
   if ( lambda < 0 ) lambda = 0
   polarX <- function(X) {
-      x_svd <- svd(X)
-      P <- x_svd$u %*% diag(x_svd$d) %*% t(x_svd$u)
-      Z <- x_svd$u %*% t(x_svd$v)
-      if (det(Z) < 0)
-        Z = Z * (-1)
-      return(list(P = P, Z = Z, Xtilde = P %*% Z))
+          x_svd <- svd(X)
+          P <- x_svd$u %*% diag(x_svd$d) %*% t(x_svd$u)
+          Z <- x_svd$u %*% t(x_svd$v)
+          if ( det( Z ) < 0 ) {
+            mydiag = diag( nrow(X) )
+            mydiag[1,1] = -1.0
+            Z = Z %*% mydiag
+            }
+          return(list(P = P, Z = Z, Xtilde = P %*% Z))
       }
 
 
@@ -1041,7 +1044,7 @@ fitTransformToPairedPoints <-function(
       myd = det( x_svd$u %*% t( x_svd$v ) )
       signadj = diag( idim )
       if ( myd > 0 ) A = x_svd$u %*% t( x_svd$v ) else {
-        signadj = diag( c( rep( 1, idim - 1 ), -1 ) )
+        signadj = diag( c( -1, rep( 1, idim - 1 ) ) )
         A = ( x_svd$u %*% signadj ) %*% t( x_svd$v )
       }
       scaling = 1
@@ -1105,7 +1108,8 @@ fitTransformToPairedPoints <-function(
 #' @param transformType Rigid, Similarity or Affine currently supported
 #' @param batch_size the batch size
 #' @param preventReflection boolean
-#' @return tensorflow tensor object.
+#' @return tensorflow tensor objects containing the transformation matrices
+#' as the first entry in the list and the error term as the second.
 #' @export
 fitTransformToPairedPointsTF <-function(
   movingPoints,
@@ -1149,7 +1153,7 @@ fitTransformToPairedPointsTF <-function(
     for ( k in 1:batch_size ) {
       newu[[k]] = u[[k-1]]
       if ( as.numeric( d[[ k - 1 ]] ) < 0 ) {
-        signadj = diag( c( rep( 1, dimensionality - 1 ), -1 ) )
+        signadj = diag( c( -1, rep( 1, dimensionality - 1 ) ) )
         newu[[k]] = tf$cast( tf$matmul( u[[k-1]], signadj ), "float64" )
         }
       if (  transformType == "Similarity" ) {
