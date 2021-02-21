@@ -12,7 +12,7 @@ RANSAC(
   maxIterations = 20,
   errorThreshold = 1,
   goodProportion = 0.5,
-  lambda = 1e-08,
+  lambda = 1e-06,
   verbose = FALSE
 )
 }

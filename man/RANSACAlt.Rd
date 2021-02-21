@@ -11,7 +11,7 @@ RANSACAlt(
   nToTrim = 2,
   minProportionPoints = 0.5,
   nCVGroups = 0,
-  lambda = 1e-08,
+  lambda = 1e-06,
   domainImage = NULL,
   numberOfFittingLevels = 4,
   meshSize = 1,

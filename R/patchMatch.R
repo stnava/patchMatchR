@@ -998,7 +998,7 @@ fitTransformToPairedPoints <-function(
   movingPoints,
   fixedPoints,
   transformType = "Affine",
-  lambda = 1e-8,
+  lambda = 1e-6,
   domainImage,
   numberOfFittingLevels=4,
   meshSize=1,
@@ -1239,7 +1239,7 @@ RANSAC <- function(
   maxIterations = 20,
   errorThreshold = 1,
   goodProportion = 0.5,
-  lambda = 1e-8,
+  lambda = 1e-6,
   verbose = FALSE ) {
   # 1 Select a random subset of the original data. Call this subset the hypothetical inliers.
   # 2 A model is fitted to the set of hypothetical inliers.
@@ -1325,7 +1325,7 @@ RANSACAlt <- function(
   nToTrim = 2,
   minProportionPoints = 0.5,
   nCVGroups = 0,
-  lambda = 1e-8,
+  lambda = 1e-6,
   domainImage=NULL, numberOfFittingLevels=4, meshSize=1, dataWeights=NULL,
   verbose = FALSE ) {
 
