@@ -2,7 +2,7 @@
 % Please edit documentation in R/patchMatch.R
 \name{deepPatchMatch}
 \alias{deepPatchMatch}
-\title{patch match two images with deep features}
+\title{deepPatchMatch patch match two images with deep features}
 \usage{
 deepPatchMatch(
   movingImage,
@@ -21,6 +21,7 @@ deepPatchMatch(
   subtractor = 127.5,
   patchVarEx = 0.95,
   meanCenter = FALSE,
+  initialMovingTransform,
   verbose = FALSE
 )
 }
@@ -64,6 +65,8 @@ chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.}
 \item{patchVarEx}{patch variance explained for ripmmarc}
 
 \item{meanCenter}{boolean to mean center each patch for ripmmarc}
+
+\item{initialMovingTransform}{optional initial transformation to moving image}
 
 \item{verbose}{boolean}
 }

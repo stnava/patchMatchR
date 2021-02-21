@@ -30,7 +30,8 @@ fitTransformToPairedPointsTF(
 \item{preventReflection}{boolean}
 }
 \value{
-tensorflow tensor object.
+tensorflow tensor objects containing the transformation matrices
+as the first entry in the list and the error term as the second.
 }
 \description{
 This function will use either the Kabsch algorithm or a least squares fitting

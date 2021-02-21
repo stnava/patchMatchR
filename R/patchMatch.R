@@ -433,7 +433,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
   return( locpts )
 }
 
-#' patch match two images with deep features
+#' deepPatchMatch patch match two images with deep features
 #'
 #' High-level function for deep patch matching that makes many assumptions and
 #' therefore minimizes the number of parameters the user needs to choose.
@@ -462,6 +462,7 @@ convertPatchCoordsToSpatialPoints<-function( patchCoords, img, patchSize = 32 ) 
 #' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
 #' @param patchVarEx patch variance explained for ripmmarc
 #' @param meanCenter boolean to mean center each patch for ripmmarc
+#' @param initialMovingTransform optional initial transformation to moving image
 #' @param verbose boolean
 #' @return correspondence data
 #' @author Avants BB
@@ -536,6 +537,7 @@ deepPatchMatch <- function(
   subtractor = 127.5,
   patchVarEx = 0.95,
   meanCenter = FALSE,
+  initialMovingTransform,
   verbose = FALSE )
 {
   if ( verbose ) print( Sys.time() )
@@ -546,9 +548,17 @@ deepPatchMatch <- function(
       subtractor = subtractor  )
     if ( verbose ) print("DF2")
     if ( verbose ) print( Sys.time() )
-    mfeatures = deepFeatures( movingImage, movingImageMask,
-      patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel,
-      subtractor = subtractor    )
+    if ( ! missing( initialMovingTransform ) ) {
+      mfeatures = deepFeatures(
+        applyAntsrTransformToImage( initialMovingTransform,
+          movingImage, movingImage, interpolation = "nearestNeighbor" ),
+        applyAntsrTransformToImage( initialMovingTransform,
+          movingImageMask, movingImage, interpolation = "nearestNeighbor" ),
+        patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel,
+        subtractor = subtractor    )
+    } else mfeatures = deepFeatures( movingImage, movingImageMask,
+        patchSize = movingPatchSize, block_name = block_name, vggmodel=vggmodel,
+        subtractor = subtractor    )
   }
   if (  missing( vggmodel ) & block_name != 'ripmmarc' )  {
     if ( verbose ) print("DF1")
@@ -557,7 +567,15 @@ deepPatchMatch <- function(
       subtractor = subtractor   )
     if ( verbose ) print("DF2x")
     if ( verbose ) print( Sys.time() )
-    mfeatures = deepFeatures( movingImage, movingImageMask,
+    if ( ! missing( initialMovingTransform ) ) {
+      mfeatures = deepFeatures(
+        applyAntsrTransformToImage( initialMovingTransform,
+          movingImage, movingImage, interpolation = "nearestNeighbor" ),
+        applyAntsrTransformToImage( initialMovingTransform,
+          movingImageMask, movingImage, interpolation = "nearestNeighbor" ),
+        patchSize = movingPatchSize, block_name = block_name, vggmodel=ffeatures$featureModel,
+        subtractor = subtractor    )
+    } else mfeatures = deepFeatures( movingImage, movingImageMask,
       patchSize = movingPatchSize, block_name = block_name, vggmodel=ffeatures$featureModel,
       subtractor = subtractor   )
     if ( verbose ) print("DF2x-end")
@@ -569,9 +587,13 @@ deepPatchMatch <- function(
       featureSubset = featureSubset, block_name = block_name,
       subtractor = subtractor  )
     if ( verbose ) print("DF2-subset")
-    mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
-      featureSubset = featureSubset, block_name = block_name, vggmodel=ffeatures$featureModel,
-      subtractor = subtractor   )
+    if ( ! missing( initialMovingTransform ) ) {
+      stop("initialMovingTransform with feature subset not implemented yet")
+    } else {
+      mfeatures = deepFeatures( movingImage, movingImageMask, patchSize = movingPatchSize,
+        featureSubset = featureSubset, block_name = block_name, vggmodel=ffeatures$featureModel,
+        subtractor = subtractor   )
+      }
   }
   if (  missing( vggmodel ) & block_name == 'ripmmarc' )  {
     pr = round(min(fixedPatchSize)/2)
@@ -581,17 +603,37 @@ deepPatchMatch <- function(
     rippedF <- ripmmarc( fixedImage, fixedImageMask, patchRadius=pr, meanCenter=meanCenter,
       evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
       patchSamples=sum(fixedImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
-    rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr, meanCenter=meanCenter,
-      evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
-      patchSamples=sum(movingImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
     coordF = getNeighborhoodInMask( fixedImage, fixedImageMask, rep(0,fixedImage@dimension),
-      spatial.info = TRUE, physical.coordinates=FALSE )
-    coordM = getNeighborhoodInMask( movingImage, movingImageMask, rep(0,movingImage@dimension),
-      spatial.info = TRUE, physical.coordinates=FALSE )
+        spatial.info = TRUE, physical.coordinates=FALSE )
+    if ( ! missing( initialMovingTransform ) ) {
+      movingImageW = applyAntsrTransformToImage( initialMovingTransform,
+        movingImage, movingImage, interpolation = "nearestNeighbor" )
+      movingImageMaskW = applyAntsrTransformToImage( initialMovingTransform,
+        movingImageMask, movingImage, interpolation = "nearestNeighbor" )
+      rippedM <- ripmmarc( movingImageW, movingImageMaskW, patchRadius=pr, meanCenter=meanCenter,
+        evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
+        patchSamples=sum(movingImageMaskW==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
+      coordM = getNeighborhoodInMask( movingImageW, movingImageMaskW, rep(0,movingImage@dimension),
+        spatial.info = TRUE, physical.coordinates=FALSE )
+    } else {
+      rippedM <- ripmmarc( movingImage, movingImageMask, patchRadius=pr, meanCenter=meanCenter,
+        evecBasis = rippedF$basisMat, canonicalFrame = rippedF$canonicalFrame,
+        patchSamples=sum(movingImageMask==1), patchVarEx=patchVarEx, rotationInvariant = rotinv )
+      coordM = getNeighborhoodInMask( movingImage, movingImageMask, rep(0,movingImage@dimension),
+        spatial.info = TRUE, physical.coordinates=FALSE )
+      }
     ffeatures = list( features=rippedF$evecCoeffs, patchCoords=coordF$indices )
     mfeatures = list( features=rippedM$evecCoeffs, patchCoords=coordM$indices  )
     if ( verbose ) print("RIP-end")
     if ( verbose ) print( Sys.time() )
+  }
+  # here we map the moving indices to physical space - transform them - and map
+  # back to the index space if we have an initial moving transform
+  if ( ! missing( initialMovingTransform ) ) {
+    initialMovingTransformInv = invertAntsrTransform( initialMovingTransform )
+    physcoord = antsTransformIndexToPhysicalPoint( movingImage, mfeatures$patchCoords )
+    physcoord = applyAntsrTransformToPoint( initialMovingTransformInv, physcoord )
+    mfeatures$patchCoords = antsTransformPhysicalPointToIndex( movingImage, physcoord )
   }
   if ( knnSpatial > 0 ) {
     if ( verbose ) print("spatial-distance-begin")
