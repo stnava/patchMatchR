@@ -2,7 +2,7 @@
 % Please edit documentation in R/patchMatch.R
 \name{RANSACAlt}
 \alias{RANSACAlt}
-\title{Alternative random sample consensus (RANSACAlt)}
+\title{Alternative random sample consensus (\)}
 \usage{
 RANSACAlt(
   fixedPoints,
@@ -51,5 +51,5 @@ scattered data value.  Default = NULL meaning all values are weighted the same.}
 output list contains best fitted model, inliers, outliers
 }
 \description{
-Alternative random sample consensus (RANSACAlt)
+Alternative random sample consensus (\)
 }

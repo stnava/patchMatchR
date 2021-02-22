@@ -27,6 +27,121 @@ coordinateImages <- function( mask, physicalCoordinates = TRUE ) {
 
 
 
+#' polar decomposition with reflection control
+#'
+#' decomposes X into P and Z (matrices) where Z is a rotation and P is shearing.
+#' will prevent Z from containing reflections.
+#'
+#' @param x matrix
+#' @return decomposition into P Z and approximation of X by \code{P %*% Z}
+#' @author Avants BB
+#' @examples
+#'
+#' pd = polarDecomposition( matrix( rnorm(9), nrow=3 ) )
+#'
+#' @export
+polarDecomposition <- function(X) {
+        x_svd <- svd(X)
+        P <- x_svd$u %*% diag(x_svd$d) %*% t(x_svd$u)
+        Z <- x_svd$u %*% t(x_svd$v)
+        if ( det( Z ) < 0 ) {
+          mydiag = diag( nrow(X) )
+          mydiag[1,1] = -1.0
+          Z = Z %*% mydiag
+          }
+        return(list(P = P, Z = Z, Xtilde = P %*% Z))
+    }
+
+
+#' random transformation matrix
+#'
+#' generates a random transformation matrix in ants style.  takes an initial
+#' transformation, its parameters and a seed that allows repeatability.
+#'
+#' @param loctx initial affine transformation to modify
+#' @param txtype one of Rigid, Affine and ScaleShear
+#' @param sdAffine standard deviation parameter e.g. 0.15
+#' @param idparams identity parameters
+#' @param fixParams fixed parameters for ANTs or ITK transformation
+#' @param seeder random seed
+#' @param idim spatial dimension of transformation
+#' @return the input transformation matrix with parameters generated randomly
+#' @author Avants BB
+#' @examples
+#'
+#' @export
+randomANTsTransformation <- function(
+  loctx,
+  txtype = c("Rigid","Affine","ScaleShear"),
+  sdAffine,
+  idparams,
+  fixParams,
+  seeder,
+  idim )
+  {
+  set.seed( seeder )
+  noisemat = stats::rnorm(length(idparams), mean = 0, sd = sdAffine)
+  if (txtype == "Translation")
+    noisemat[1:(length(idparams) - idim )] = 0
+  idparams = idparams + noisemat
+  idmat = matrix(idparams[1:(length(idparams) - idim )],
+                  ncol = idim )
+  idmat = polarDecomposition(idmat)
+  if (txtype == "Rigid")
+                  idmat = idmat$Z
+  else if (txtype == "Affine")
+                  idmat = idmat$Xtilde
+  else if (txtype == "ScaleShear")
+                  idmat = idmat$P
+  idparams[1:(length(idparams) - idim )] = as.numeric(idmat)
+  setAntsrTransformParameters(loctx, idparams)
+  setAntsrTransformFixedParameters( loctx, fixParams )
+  return(loctx)
+  }
+
+
+#' transform an image by a random matrix
+#'
+#' generates a random transformation matrix and its application to an image
+#'
+#' @param image input image to be transformed
+#' @param txtype one of Rigid, Affine and ScaleShear
+#' @param sdAffine standard deviation parameter e.g. 0.15
+#' @param seeder random seed
+#' @param fixedParams optional fixed parameters for ANTs or ITK transformation
+#' @param interpolation optional interpolation choice
+#' @return the transformed image and the transformation matrix
+#' @author Avants BB
+#' @examples
+#' rr = randomAffineImage( ri( 1 ), "Rigid", sdAffine = 5 )
+#' @export
+randomAffineImage <- function(
+  image,
+  txtype = c("Rigid", "Affine", "ScaleShear"),
+  sdAffine=0.1,
+  seeder,
+  fixedParams, interpolation='nearestNeighbor' ) {
+  if ( missing( seeder ) ) seeder = sample( .Random.seed, 1 )
+  if ( missing( fixedParams ) ) fixedParams = getCenterOfMass( image * 0 + 1 )
+  txtype = txtype[1]
+  loctx <- createAntsrTransform(precision = "float",
+    type = "AffineTransform", dimension = image@dimension  )
+  setAntsrTransformFixedParameters(loctx, fixedParams)
+  idparams = getAntsrTransformParameters( loctx )
+  setAntsrTransformParameters( loctx, idparams )
+  setAntsrTransformFixedParameters( loctx, fixedParams)
+  loctx = randomANTsTransformation( loctx, sdAffine=sdAffine, txtype = txtype,
+    idparams = idparams, fixParams = fixedParams, seeder = seeder,
+    idim = image@dimension )
+  imageR = applyAntsrTransformToImage( loctx, image, image,
+      interpolation = interpolation )
+  return( list( imageR, loctx ) )
+}
+
+
+
+
+
 #' patch match two images
 #'
 #' High-level function for patch matching that makes many assumptions and
@@ -1244,7 +1359,7 @@ RANSAC <- function(
     modelFit = fitTransformToPairedPoints(   # step 2
       movingPoints[ randSubset, ],
       fixedPoints[ randSubset, ],
-      transformType = transformType, lambda = lambda )
+      transformType = transformType, lambda = lambda, verbose=verbose )
     mapComplement = applyAntsrTransformToPoint( modelFit$transform, fixedPoints )
     err = sqrt( rowMeans( ( movingPoints - mapComplement )^2 ) )
     mn1 = mean( err[ randSubset ] )
@@ -1280,7 +1395,7 @@ RANSAC <- function(
 
 
 
-#' Alternative random sample consensus (RANSACAlt)
+#' Alternative random sample consensus (\)
 #'
 #' @param movingPoints moving points matrix
 #' @param fixedPoints fixed points matrix
@@ -1325,7 +1440,7 @@ RANSACAlt <- function(
   nMax = nrow( myFP )
   minn = round( minProportionPoints * nMax )
   idim = ncol( myFP )
-  if ( minn < (idim*2 + min(nToTrim) ) ) minn = idim*2 + min(nToTrim)
+  if ( minn < (idim*2 + min(nToTrim) ) ) minn = idim*2 + min(nToTrim)*2
   its = 0
   rejectFixedPoints = NULL
   rejectMovingPoints = NULL
@@ -1593,4 +1708,113 @@ deepLandmarkRegressionWithHeatmaps <- function(
       keras_model(
         lappend( unet$inputs, mycc ), list( unet_output, catout  ) )
       )
+}
+
+
+
+
+
+
+#' deepPatchMatch with multiple starting points
+#'
+#' High-level function for deep patch matching that uses multiple starting
+#' points to reduce sensitivity to initialization.
+#'
+#' @param movingImage input image from which we extract patches that are
+#' transformed to the space of the fixed image
+#' @param fixedImage input image that provides the fixed reference domain.
+#' @param movingImageMask defines the object of interest in the movingImage
+#' @param fixedImageMask defines the object of interest in the fixedImage
+#' @param movingPatchSize integer greater than or equal to 32.
+#' @param fixedPatchSize integer greater than or equal to 32.
+#' @param block_name name of vgg feature block, either block2_conv2 or integer.
+#' use the former for smaller patch sizes.
+#' @param vggmodel prebuilt feature model
+#' @param subtractor value to subtract when scaling image intensity; should be
+#' chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.
+#' @param patchVarEx patch variance explained for ripmmarc
+#' @param meanCenter boolean to mean center each patch for ripmmarc
+#' @param numberOfStarts the number of starting points to try
+#' @param sdAffine standard deviation parameter e.g. 0.15
+#' @param verbose boolean
+#' @return matched points and transformation
+#' @author Avants BB
+#' @examples
+#' \dontrun{
+#' library( tensorflow )
+#' library( ANTsR )
+#' nP1 = 250
+#' nP2 = 500
+#' psz = 12
+#' img <- ri( 1 ) %>% iMath( "Normalize" )
+#' img2 <- ri( 2 ) %>% iMath( "Normalize" )
+#' mask = randomMask( getMask( img ), nP1 )
+#' mask2 = randomMask( getMask( img2 ), nP2 )
+#' match = deepPatchMatchMultiStart( img2, img, mask, mask2, numberOfStarts=3, verbose=FALSE )
+#' }
+#' @export deepPatchMatchMultiStart
+deepPatchMatchMultiStart <- function(
+  movingImage,
+  fixedImage,
+  movingImageMask,
+  fixedImageMask,
+  movingPatchSize = 16,
+  fixedPatchSize = 16,
+  block_name = 20,
+  vggmodel,
+  subtractor = 127.5,
+  patchVarEx = 0.95,
+  meanCenter = FALSE,
+  numberOfStarts=1,
+  sdAffine = 5,
+  verbose = FALSE )
+{
+  bestTx = NULL
+  bestOne = Inf
+  samples = 1:1000000000
+  txtype = "Rigid"
+  for ( myrot in 0:(numberOfStarts-1) ) {
+    locseed = sample(samples,1)
+    if (verbose) print(paste("BEGIN",myrot+1))
+    rr = randomAffineImage( movingImage, sdAffine=sdAffine, seeder=locseed, txtype=txtype )
+    if (verbose) print(paste("got random rot - begin match"))
+    myvgg = NULL
+    with(tf$device("/cpu:0"), {
+      if ( myrot == 0 ) {
+        dmatch = deepPatchMatch( movingImage, fixedImage,
+          movingImageMask, fixedImageMask, movingPatchSize, fixedPatchSize,
+          block_name=block_name, patchVarEx=patchVarEx, meanCenter=meanCenter, verbose=verbose )
+        if ( verbose ) print("DONE with deep match 0")
+        # myvgg = dmatch$ffeatures$featureModel
+        } else {
+          if ( verbose ) print(paste("start with deep match",myrot))
+          dmatch = deepPatchMatch( movingImage, fixedImage,
+            movingImageMask, fixedImageMask, movingPatchSize, fixedPatchSize,
+            block_name=block_name, patchVarEx=patchVarEx, meanCenter=meanCenter,
+            initialMovingTransform=rr[[2]],  verbose=verbose, # vggmodel=myvgg,
+            subtractor = 127.5 )
+          if ( verbose ) print(paste("start with deep match",myrot))
+        }
+      })
+    if ( verbose ) print( paste("Match:",myrot+1,"done") )
+    mlm = matchedLandmarks( dmatch, fixedImage, movingImage, c(3,3) )
+    ncv = 8
+    if ( verbose ) print( paste("Fit0:",myrot+1,"start") )
+    tx = fitTransformToPairedPoints( mlm$movingPoints, mlm$fixedPoints, txtype )
+    if ( verbose ) print( paste("RANSAC:",myrot+1,"start") )
+    rns = RANSACAlt( mlm$fixedPoints, mlm$movingPoints, transformType = txtype,
+        minProportionPoints=0.0, nToTrim = 2, nCVGroups=ncv, verbose = FALSE, lambda=1e-1 )
+    if ( verbose ) print( paste("RANSAC:",myrot+1,"done") )
+    wRansac = applyAntsrTransformToImage( rns$finalModel$transform,
+        movingImage, fixedImage  )
+    locmi = antsImageMutualInformation( fixedImage, wRansac )
+    if ( verbose ) print( paste("MI:",myrot+1," = ",locmi) )
+    if ( locmi < bestOne ) {
+      if ( verbose ) print( paste("BEST MI:",myrot+1," = ",locmi) )
+      bestOne = locmi
+      whichBest = myrot
+      bestTx = rns
+      }
+    }
+  return( bestTx )
 }
