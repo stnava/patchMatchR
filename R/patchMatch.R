@@ -1050,8 +1050,13 @@ fitTransformToPairedPoints <-function(
       x11b = t( x11 ) %*% x11
       yb = t( x11 ) %*% y
       yprior = cbind( y, rep( 1, nrow(y)))
-#      temp = qr.solve( x11* ( 1.0 - lambda ) + lambda * yprior, y )
-      temp = MASS::ginv( x11* ( 1.0 - lambda ) + lambda * yprior ) %*% y
+      mattoinvert = x11 * ( 1.0 - lambda ) + lambda * yprior
+      backupinvert <- function( x, y ) {
+        tryCatch(  qr.solve( mattoinvert, y ) , error = function(c) {
+          return( MASS::ginv( mattoinvert ) %*% y )
+        })
+      }
+      temp = backupinvert( mattoinvert, y )
       A = polarX( t( temp[1:idim, 1:idim ] ) )$Xtilde # resolve reflection issues
 #      A = t( temp[1:idim, 1:idim ] ) # no reflection fix
       trans = temp[idim+1,] + centerY - centerX
