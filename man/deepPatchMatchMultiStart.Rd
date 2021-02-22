@@ -18,6 +18,7 @@ deepPatchMatchMultiStart(
   meanCenter = FALSE,
   numberOfStarts = 1,
   sdAffine = 5,
+  transformType = "Rigid",
   verbose = FALSE
 )
 }
@@ -51,6 +52,8 @@ chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.}
 
 \item{sdAffine}{standard deviation parameter e.g. 0.15}
 
+\item{transformType}{one of Rigid, Affine and ScaleShear}
+
 \item{verbose}{boolean}
 }
 \value{
@@ -71,7 +74,7 @@ img <- ri( 1 ) \%>\% iMath( "Normalize" )
 img2 <- ri( 2 ) \%>\% iMath( "Normalize" )
 mask = randomMask( getMask( img ), nP1 )
 mask2 = randomMask( getMask( img2 ), nP2 )
-match = deepPatchMatchMultiStart( img2, img, mask, mask2, numberOfStarts=3, verbose=T )
+match = deepPatchMatchMultiStart( img2, img, mask, mask2, numberOfStarts=3, verbose=FALSE )
 }
 }
 \author{

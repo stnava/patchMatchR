@@ -6,7 +6,7 @@
 \usage{
 randomAffineImage(
   image,
-  txtype = c("Rigid", "Affine", "ScaleShear"),
+  transformType = c("Rigid", "Affine", "ScaleShear"),
   sdAffine = 0.1,
   seeder,
   fixedParams,
@@ -16,7 +16,7 @@ randomAffineImage(
 \arguments{
 \item{image}{input image to be transformed}
 
-\item{txtype}{one of Rigid, Affine and ScaleShear}
+\item{transformType}{one of Rigid, Affine and ScaleShear}
 
 \item{sdAffine}{standard deviation parameter e.g. 0.15}
 

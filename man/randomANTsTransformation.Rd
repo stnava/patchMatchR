@@ -6,7 +6,7 @@
 \usage{
 randomANTsTransformation(
   loctx,
-  txtype = c("Rigid", "Affine", "ScaleShear"),
+  transformType = c("Rigid", "Affine", "ScaleShear"),
   sdAffine,
   idparams,
   fixParams,
@@ -17,7 +17,7 @@ randomANTsTransformation(
 \arguments{
 \item{loctx}{initial affine transformation to modify}
 
-\item{txtype}{one of Rigid, Affine and ScaleShear}
+\item{transformType}{one of Rigid, Affine and ScaleShear}
 
 \item{sdAffine}{standard deviation parameter e.g. 0.15}
 

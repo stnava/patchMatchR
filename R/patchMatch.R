@@ -59,7 +59,7 @@ polarDecomposition <- function(X) {
 #' transformation, its parameters and a seed that allows repeatability.
 #'
 #' @param loctx initial affine transformation to modify
-#' @param txtype one of Rigid, Affine and ScaleShear
+#' @param transformType one of Rigid, Affine and ScaleShear
 #' @param sdAffine standard deviation parameter e.g. 0.15
 #' @param idparams identity parameters
 #' @param fixParams fixed parameters for ANTs or ITK transformation
@@ -72,7 +72,7 @@ polarDecomposition <- function(X) {
 #' @export
 randomANTsTransformation <- function(
   loctx,
-  txtype = c("Rigid","Affine","ScaleShear"),
+  transformType = c("Rigid","Affine","ScaleShear"),
   sdAffine,
   idparams,
   fixParams,
@@ -81,17 +81,17 @@ randomANTsTransformation <- function(
   {
   set.seed( seeder )
   noisemat = stats::rnorm(length(idparams), mean = 0, sd = sdAffine)
-  if (txtype == "Translation")
+  if (transformType == "Translation")
     noisemat[1:(length(idparams) - idim )] = 0
   idparams = idparams + noisemat
   idmat = matrix(idparams[1:(length(idparams) - idim )],
                   ncol = idim )
   idmat = polarDecomposition(idmat)
-  if (txtype == "Rigid")
+  if (transformType == "Rigid")
                   idmat = idmat$Z
-  else if (txtype == "Affine")
+  else if (transformType == "Affine")
                   idmat = idmat$Xtilde
-  else if (txtype == "ScaleShear")
+  else if (transformType == "ScaleShear")
                   idmat = idmat$P
   idparams[1:(length(idparams) - idim )] = as.numeric(idmat)
   setAntsrTransformParameters(loctx, idparams)
@@ -105,7 +105,7 @@ randomANTsTransformation <- function(
 #' generates a random transformation matrix and its application to an image
 #'
 #' @param image input image to be transformed
-#' @param txtype one of Rigid, Affine and ScaleShear
+#' @param transformType one of Rigid, Affine and ScaleShear
 #' @param sdAffine standard deviation parameter e.g. 0.15
 #' @param seeder random seed
 #' @param fixedParams optional fixed parameters for ANTs or ITK transformation
@@ -117,20 +117,20 @@ randomANTsTransformation <- function(
 #' @export
 randomAffineImage <- function(
   image,
-  txtype = c("Rigid", "Affine", "ScaleShear"),
+  transformType = c("Rigid", "Affine", "ScaleShear"),
   sdAffine=0.1,
   seeder,
   fixedParams, interpolation='nearestNeighbor' ) {
   if ( missing( seeder ) ) seeder = sample( .Random.seed, 1 )
   if ( missing( fixedParams ) ) fixedParams = getCenterOfMass( image * 0 + 1 )
-  txtype = txtype[1]
+  transformType = transformType[1]
   loctx <- createAntsrTransform(precision = "float",
     type = "AffineTransform", dimension = image@dimension  )
   setAntsrTransformFixedParameters(loctx, fixedParams)
   idparams = getAntsrTransformParameters( loctx )
   setAntsrTransformParameters( loctx, idparams )
   setAntsrTransformFixedParameters( loctx, fixedParams)
-  loctx = randomANTsTransformation( loctx, sdAffine=sdAffine, txtype = txtype,
+  loctx = randomANTsTransformation( loctx, sdAffine=sdAffine, transformType = transformType,
     idparams = idparams, fixParams = fixedParams, seeder = seeder,
     idim = image@dimension )
   imageR = applyAntsrTransformToImage( loctx, image, image,
@@ -210,11 +210,11 @@ patchMatch <- function(
   mapPts = antsApplyTransformsToPoints( fixedImage@dimension,
       intmat0$indices, transformlist = initialMap$fwdtransforms  )
 
-  txtype = "Euler2DTransform"
+  transformType = "Euler2DTransform"
   if ( fixedImage@dimension == 3 )
-    txtype = "AffineTransform"
+    transformType = "AffineTransform"
 
-  if ( verbose ) print( paste( "txtype =", txtype ) )
+  if ( verbose ) print( paste( "transformType =", transformType ) )
 
   off = rep( fixedPatchRadius, fixedImage@dimension )
   scl = antsGetSpacing( movingImage ) / antsGetSpacing( fixedImage )
@@ -260,7 +260,7 @@ patchMatch <- function(
         }
       centerOfMassTemplate <- getCenterOfMass( i0patch*0+1 )
       centerOfMassImage <- getCenterOfMass( i1patch * 0 + 1 )
-      xfrm <- createAntsrTransform( type = txtype,
+      xfrm <- createAntsrTransform( type = transformType,
         center = centerOfMassTemplate,
         translation = centerOfMassImage - centerOfMassTemplate )
       i1rpatch = applyAntsrTransformToImage( xfrm, i1patch, i0patch )
@@ -1736,6 +1736,7 @@ deepLandmarkRegressionWithHeatmaps <- function(
 #' @param meanCenter boolean to mean center each patch for ripmmarc
 #' @param numberOfStarts the number of starting points to try
 #' @param sdAffine standard deviation parameter e.g. 0.15
+#' @param transformType one of Rigid, Affine and ScaleShear
 #' @param verbose boolean
 #' @return matched points and transformation
 #' @author Avants BB
@@ -1767,16 +1768,16 @@ deepPatchMatchMultiStart <- function(
   meanCenter = FALSE,
   numberOfStarts=1,
   sdAffine = 5,
+  transformType = 'Rigid',
   verbose = FALSE )
 {
   bestTx = NULL
   bestOne = Inf
   samples = 1:1000000000
-  txtype = "Rigid"
   for ( myrot in 0:(numberOfStarts-1) ) {
     locseed = sample(samples,1)
     if (verbose) print(paste("BEGIN",myrot+1))
-    rr = randomAffineImage( movingImage, sdAffine=sdAffine, seeder=locseed, txtype=txtype )
+    rr = randomAffineImage( movingImage, sdAffine=sdAffine, seeder=locseed, transformType='Rigid' )
     if (verbose) print(paste("got random rot - begin match"))
     myvgg = NULL
     with(tf$device("/cpu:0"), {
@@ -1799,10 +1800,8 @@ deepPatchMatchMultiStart <- function(
     if ( verbose ) print( paste("Match:",myrot+1,"done") )
     mlm = matchedLandmarks( dmatch, fixedImage, movingImage, c(3,3) )
     ncv = 8
-    if ( verbose ) print( paste("Fit0:",myrot+1,"start") )
-    tx = fitTransformToPairedPoints( mlm$movingPoints, mlm$fixedPoints, txtype )
     if ( verbose ) print( paste("RANSAC:",myrot+1,"start") )
-    rns = RANSACAlt( mlm$fixedPoints, mlm$movingPoints, transformType = txtype,
+    rns = RANSACAlt( mlm$fixedPoints, mlm$movingPoints, transformType = transformType,
         minProportionPoints=0.0, nToTrim = 2, nCVGroups=ncv, verbose = FALSE, lambda=1e-1 )
     if ( verbose ) print( paste("RANSAC:",myrot+1,"done") )
     wRansac = applyAntsrTransformToImage( rns$finalModel$transform,
