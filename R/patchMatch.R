@@ -1097,6 +1097,7 @@ fitTransformToPairedPoints <-function(
   dataWeights )
   {
   verbose=FALSE
+  scaling = 1
   transformType = tolower( transformType )
   if ( ! any( transformType %in%
     c( "rigid", "affine", "similarity", "bspline" ) ) )
@@ -1187,7 +1188,6 @@ fitTransformToPairedPoints <-function(
         signadj = diag( c( -1, rep( 1, idim - 1 ) ) )
         A = ( x_svd$u %*% signadj ) %*% t( x_svd$v )
       }
-      scaling = 1
       if ( transformType == "similarity" ) {
         scaling =  sqrt( mean( rowSums( y^2 )/n )  ) /
                    sqrt( mean( rowSums( x^2 )/n )  )
@@ -1212,7 +1212,7 @@ fitTransformToPairedPoints <-function(
 
     err = norm( movingPoints - applyAntsrTransformToPoint( aff, fixedPoints ), "F" )
 
-    return( list( transform = aff, error = err/n ) )
+    return( list( transform = aff, error = err/n, scaling=scaling ) )
   }
   if ( transformType == "bspline" ) {
     if ( length( meshSize ) == domainImage@dimension ) mymeshsize = meshSize
