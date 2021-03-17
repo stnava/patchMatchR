@@ -1808,6 +1808,7 @@ deepPatchMatchMultiStart <- function(
         movingImage, fixedImage  )
     locmi = antsImageMutualInformation( fixedImage, wRansac )
     if ( verbose ) print( paste("MI:",myrot+1," = ",locmi) )
+    if ( is.na( locmi ) ) locmi = Inf
     if ( locmi < bestOne ) {
       if ( verbose ) print( paste("BEST MI:",myrot+1," = ",locmi) )
       bestOne = locmi
