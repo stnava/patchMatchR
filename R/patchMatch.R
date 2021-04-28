@@ -1691,7 +1691,7 @@ deepLandmarkRegressionWithHeatmaps <- function(
   for ( k in 1:length(weightedRegressionList) ) {
     # forced averaging function
     weightedRegressionList[[k]] = weightedRegressionList[[k]] /
-      ( K$sum( weightedRegressionList[[k]], regressAxes, keepdims = TRUE ) + 1e-19 )
+      ( K$sum( weightedRegressionList[[k]], regressAxes, keepdims = TRUE ) + K$constant(1e-19) )
     weightedRegressionList[[k]] =
       layer_multiply( list( mycc, weightedRegressionList[[k]] ), trainable = FALSE )
     regPoints[[k]] = K$sum( weightedRegressionList[[k]], regressAxes2, keepdims = FALSE )
