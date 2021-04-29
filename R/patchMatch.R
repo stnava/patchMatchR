@@ -1684,17 +1684,18 @@ deepLandmarkRegressionWithHeatmaps <- function(
     }
   weightedRegressionList = tf$split( unet_output, as.integer(nPoints),
     axis=as.integer(targetDimensionality+1) )
-  K <- keras::backend()
   regressAxes = as.integer(1:(targetDimensionality+1))
   regressAxes2 = as.integer(1:(targetDimensionality))
   regPoints = list()
   for ( k in 1:length(weightedRegressionList) ) {
     # forced averaging function
-    weightedRegressionList[[k]] = weightedRegressionList[[k]] /
-      ( K$sum( weightedRegressionList[[k]], regressAxes, keepdims = TRUE ) + K$constant(1e-19) )
+    temp = tf$math$reduce_sum( weightedRegressionList[[k]],
+        regressAxes, keepdims = TRUE )
+    weightedRegressionList[[k]] =
+      tf$math$divide_no_nan( weightedRegressionList[[k]], temp )
     weightedRegressionList[[k]] =
       layer_multiply( list( mycc, weightedRegressionList[[k]] ), trainable = FALSE )
-    regPoints[[k]] = K$sum( weightedRegressionList[[k]], regressAxes2, keepdims = FALSE )
+    regPoints[[k]] = tf$math$reduce_sum( weightedRegressionList[[k]], regressAxes2, keepdims = FALSE )
     }
   catout = layer_concatenate( regPoints, axis=1L ) %>%
     layer_reshape( c( nPoints , targetDimensionality ))
@@ -1709,10 +1710,6 @@ deepLandmarkRegressionWithHeatmaps <- function(
         lappend( unet$inputs, mycc ), list( unet_output, catout  ) )
       )
 }
-
-
-
-
 
 
 #' deepPatchMatch with multiple starting points
