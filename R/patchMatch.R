@@ -1649,7 +1649,7 @@ featureDistanceMap <- function( image1, image2, jointMask, patchSize=32, ... ) {
 #' @export
 deepLandmarkRegressionWithHeatmaps <- function(
   model,
-  activation = c("none","relu","trelu","softmax"),
+  activation = c("none","relu","trelu","softmax",'sigmoid'),
   theta ) {
   multiInput = FALSE
   if ( length( model$inputs ) == 1 ) {
@@ -1674,6 +1674,9 @@ deepLandmarkRegressionWithHeatmaps <- function(
   } else if ( activation == 'softmax') {
     unet_output = unet$outputs[[1]] %>%
       layer_activation_softmax()
+  } else if ( activation == 'sigmoid') {
+    unet_output = unet$outputs[[1]] %>%
+      tf$nn$sigmoid()
   } else {
     if ( is.na( theta ) )
       unet_output = unet$outputs[[1]] %>%
