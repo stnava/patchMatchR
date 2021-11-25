@@ -1670,19 +1670,19 @@ deepLandmarkRegressionWithHeatmaps <- function(
   nPoints = tail( unlist( model$output_shape ), 1 )
   # perform soft thresholding to get positive component of unet output
   if ( activation == 'none' ) {
-    unet_output = unet$outputs[[1]]
+    unet_output = model$outputs[[1]]
   } else if ( activation == 'softmax') {
-    unet_output = unet$outputs[[1]] %>%
+    unet_output = model$outputs[[1]] %>%
       layer_activation_softmax()
   } else if ( activation == 'sigmoid') {
-    unet_output = unet$outputs[[1]] %>%
+    unet_output = model$outputs[[1]] %>%
       tf$nn$sigmoid()
   } else {
     if ( is.na( theta ) )
-      unet_output = unet$outputs[[1]] %>%
+      unet_output = model$outputs[[1]] %>%
         layer_activation_relu()
     if ( ! is.na( theta ) )
-      unet_output = unet$outputs[[1]] %>%
+      unet_output = model$outputs[[1]] %>%
         layer_activation_thresholded_relu( theta = theta )
     }
   weightedRegressionList = tf$split( unet_output, as.integer(nPoints),
@@ -1705,12 +1705,12 @@ deepLandmarkRegressionWithHeatmaps <- function(
   if ( ! multiInput )
     return(
       keras_model(
-        list( unet$inputs[[1]], mycc), list( unet_output, catout  ) )
+        list( model$inputs[[1]], mycc), list( unet_output, catout  ) )
       )
   if ( multiInput )
     return(
       keras_model(
-        lappend( unet$inputs, mycc ), list( unet_output, catout  ) )
+        lappend( model$inputs, mycc ), list( unet_output, catout  ) )
       )
 }
 
