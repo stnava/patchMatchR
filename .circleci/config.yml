@@ -1,0 +1,52 @@
+version: 2
+
+
+steps: &steps
+  steps:
+#    - restore_cache:
+#        keys:
+#          - cache-{{ .Environment.CIRCLE_JOB }}
+    - checkout
+#    - run:
+#        name: Install package dependencies env
+#        command: sudo apt-get update && sudo apt install jags && sudo apt-get install -y r-cran-rgl
+#    - run:
+#        name: Install Matrix
+#        command: R -e "devtools::install_cran('Matrix'); devtools::install_cran('credentials')"
+    - run:
+        name: Install neuroconductor
+        command: R -e "source('https://neuroconductor.org/neurocLite.R')"
+#    - run:
+#        name: Install package neuroconductor dependencies manually
+#        command: Rscript -e "source('https://neuroconductor.org/neurocLite.R'); neuro_install(c('ITKR', 'ANTsRCore','ANTsR'))"
+    - run:
+        name: Install package dependencies manually
+        command: Rscript -e "install.packages(c('Hmisc', 'tfdatasets'))"
+    - run:
+        name: Build package
+        command: R CMD build .
+    - run:
+        name: Check package
+        command: R CMD check *tar.gz
+
+jobs:
+  release:
+    docker:
+      - image: stnava/antsr:latest
+    <<: *steps
+  oldrel:
+    docker:
+      - image: stnava/antsr:latest
+    <<: *steps
+  devel:
+    docker:
+      - image: stnava/antsr:latest
+    <<: *steps
+
+workflows:
+  version: 2
+  all:
+    jobs:
+      - release
+#      - oldrel
+#      - devel
