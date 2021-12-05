@@ -170,6 +170,7 @@ randomAffineImage <- function(
 #'
 #' @export patchMatch
 #' @importFrom keras layer_activation_relu layer_activation_softmax layer_activation_thresholded_relu layer_concatenate layer_input layer_multiply layer_reshape
+#' @importFrom MASS ginv
 #' @importFrom utils head tail
 #' @importFrom stats predict rnorm sd na.omit
 #' @importFrom magrittr %>%
@@ -177,7 +178,10 @@ randomAffineImage <- function(
 #' @importFrom ANTsR getCenterOfMass sparseDistanceMatrixXY makePointsImage
 #' @importFrom ANTsRCore antsRegistration antsApplyTransforms applyAntsrTransformToImage antsApplyTransformsToPoints antsGetSpacing applyAntsrTransformToImage createAntsrTransform  cropIndices getNeighborhoodInMask iMath antsTransformPhysicalPointToIndex readAntsrTransform antsImageClone antsImageMutualInformation
 #' @importFrom ANTsRCore antsGetDirection antsGetOrigin resampleImage labelStats antsTransformIndexToPhysicalPoint applyAntsrTransformToPoint antsSetSpacing getAntsrTransformFixedParameters invertAntsrTransform randomMask labelClusters getAntsrTransformParameters getCentroids getMask readAntsrTransform ri
-#' @importFrom ANTsRCore setAntsrTransformFixedParameters setAntsrTransformParameters makeImage ripmmarc
+#' @importFrom ANTsRCore setAntsrTransformFixedParameters setAntsrTransformParameters makeImage ripmmarc lappend antsrTransformFromDisplacementField
+#' @importFrom ANTsR fitBsplineDisplacementField
+#' @importFrom magrittr %>%
+#' @importFrom tensorflow tf
 patchMatch <- function(
   movingImage,
   fixedImage,
