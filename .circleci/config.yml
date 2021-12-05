@@ -23,6 +23,9 @@ steps: &steps
         name: Install package dependencies manually
         command: Rscript -e "install.packages(c('Hmisc', 'tfdatasets'))"
     - run:
+        name: Install tf
+        command: Rscript -e "tensorflow::install_tensorflow()"
+    - run:
         name: Build package
         command: R CMD build .
     - run:

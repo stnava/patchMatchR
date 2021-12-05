@@ -1036,7 +1036,7 @@ deepFeatures <- function( x, mask, patchSize = 64,
   patches = patches0
   nChannels = 1
   if ( ! missing( vggmodel ) & block_name != 'ripmmarc' )
-    nChannels = unlist(dim(vggmodel$inputs[[1]]))
+    nChannels = na.omit( unlist(dim(vggmodel$inputs[[1]])) )
   if ( idim == 2 & nChannels == 3 ) {
     for( k in 2:3 )
       patches = abind( patches, patches0, along = idim+2)
