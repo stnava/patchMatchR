@@ -1359,7 +1359,7 @@ RANSAC <- function(
     modelFit = fitTransformToPairedPoints(   # step 2
       movingPoints[ randSubset, ],
       fixedPoints[ randSubset, ],
-      transformType = transformType, lambda = lambda, verbose=verbose )
+      transformType = transformType, lambda = lambda )
     mapComplement = applyAntsrTransformToPoint( modelFit$transform, fixedPoints )
     err = sqrt( rowMeans( ( movingPoints - mapComplement )^2 ) )
     mn1 = mean( err[ randSubset ] )
