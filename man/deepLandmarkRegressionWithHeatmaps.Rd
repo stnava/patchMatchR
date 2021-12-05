@@ -6,7 +6,7 @@
 \usage{
 deepLandmarkRegressionWithHeatmaps(
   model,
-  activation = c("none", "relu", "trelu", "softmax"),
+  activation = c("none", "relu", "trelu", "softmax", "sigmoid"),
   theta
 )
 }

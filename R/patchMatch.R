@@ -32,7 +32,7 @@ coordinateImages <- function( mask, physicalCoordinates = TRUE ) {
 #' decomposes X into P and Z (matrices) where Z is a rotation and P is shearing.
 #' will prevent Z from containing reflections.
 #'
-#' @param x matrix
+#' @param X matrix
 #' @return decomposition into P Z and approximation of X by \code{P %*% Z}
 #' @author Avants BB
 #' @examples
@@ -169,12 +169,15 @@ randomAffineImage <- function(
 #' match = patchMatch( img2, img, mask, fixedPatchRadius = 3 )
 #'
 #' @export patchMatch
-#' @importFrom stats predict rnorm sd
+#' @importFrom keras layer_activation_relu layer_activation_softmax layer_activation_thresholded_relu layer_concatenate layer_input layer_multiply layer_reshape
+#' @importFrom utils head tail
+#' @importFrom stats predict rnorm sd na.omit
 #' @importFrom magrittr %>%
 #' @importFrom graphics plot rasterImage rect plot.new text layout
 #' @importFrom ANTsR getCenterOfMass sparseDistanceMatrixXY makePointsImage
 #' @importFrom ANTsRCore antsRegistration antsApplyTransforms applyAntsrTransformToImage antsApplyTransformsToPoints antsGetSpacing applyAntsrTransformToImage createAntsrTransform  cropIndices getNeighborhoodInMask iMath antsTransformPhysicalPointToIndex readAntsrTransform antsImageClone antsImageMutualInformation
 #' @importFrom ANTsRCore antsGetDirection antsGetOrigin resampleImage labelStats antsTransformIndexToPhysicalPoint applyAntsrTransformToPoint antsSetSpacing getAntsrTransformFixedParameters invertAntsrTransform randomMask labelClusters getAntsrTransformParameters getCentroids getMask readAntsrTransform ri
+#' @importFrom ANTsRCore setAntsrTransformFixedParameters setAntsrTransformParameters makeImage ripmmarc
 patchMatch <- function(
   movingImage,
   fixedImage,

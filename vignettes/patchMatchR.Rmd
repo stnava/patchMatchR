@@ -181,10 +181,11 @@ image matching.   Here, we show how to extract VGG19 features from medical image
 library( keras )
 library( abind )
 library( ANTsRNet )
+library( pheatmap )
 img <- ri( 1 ) %>% iMath( "Normalize" )
 mask = randomMask( getMask( img ), 20 )
 features = deepFeatures( img, mask, patchSize = 32 )
-pheatmap::pheatmap( abs( cor( t( features$features ) ) ) )
+pheatmap( abs( cor( t( features$features ) ) ) )
 ```
 
 ## Deep feature matching

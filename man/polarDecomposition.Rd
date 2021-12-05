@@ -7,7 +7,7 @@
 polarDecomposition(X)
 }
 \arguments{
-\item{x}{matrix}
+\item{X}{matrix}
 }
 \value{
 decomposition into P Z and approximation of X by \code{P \%*\% Z}
