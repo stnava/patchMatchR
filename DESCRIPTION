@@ -27,8 +27,7 @@ Imports:
     tensorflow
 Suggests:
     ggplot2,
-    rmarkdown,
-    tensorflow
+    rmarkdown
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 VignetteBuilder: knitr
