@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>extract deep features from 2D or 3D image — deepFeatures • patchMatchR</title>
+<title>Alternative random sample consensus (\) — RANSACAlt • patchMatchR</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="extract deep features from 2D or 3D image — deepFeatures" />
-<meta property="og:description" content="High-level function for extracting features based on a pretrained network." />
+<meta property="og:title" content="Alternative random sample consensus (\) — RANSACAlt" />
+<meta property="og:description" content="Alternative random sample consensus (\)" />
 
 
 
@@ -106,85 +106,90 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>extract deep features from 2D or 3D image</h1>
+    <h1>Alternative random sample consensus (\)</h1>
     
-    <div class="hidden name"><code>deepFeatures.Rd</code></div>
+    <div class="hidden name"><code>RANSACAlt.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>High-level function for extracting features based on a pretrained network.</p>
+    <p>Alternative random sample consensus (\)</p>
     </div>
 
-    <pre class="usage"><span class='fu'>deepFeatures</span><span class='op'>(</span>
-  <span class='va'>x</span>,
-  <span class='va'>mask</span>,
-  patchSize <span class='op'>=</span> <span class='fl'>64</span>,
-  <span class='va'>featureSubset</span>,
-  block_name <span class='op'>=</span> <span class='st'>"block2_conv2"</span>,
-  <span class='va'>vggmodel</span>,
-  subtractor <span class='op'>=</span> <span class='fl'>127.5</span>,
-  patchVarEx <span class='op'>=</span> <span class='fl'>0.95</span>,
-  meanCenter <span class='op'>=</span> <span class='cn'>FALSE</span>
+    <pre class="usage"><span class='fu'>RANSACAlt</span><span class='op'>(</span>
+  <span class='va'>fixedPoints</span>,
+  <span class='va'>movingPoints</span>,
+  transformType <span class='op'>=</span> <span class='st'>"Affine"</span>,
+  nToTrim <span class='op'>=</span> <span class='fl'>2</span>,
+  minProportionPoints <span class='op'>=</span> <span class='fl'>0.5</span>,
+  nCVGroups <span class='op'>=</span> <span class='fl'>0</span>,
+  lambda <span class='op'>=</span> <span class='fl'>1e-06</span>,
+  domainImage <span class='op'>=</span> <span class='cn'>NULL</span>,
+  numberOfFittingLevels <span class='op'>=</span> <span class='fl'>4</span>,
+  meshSize <span class='op'>=</span> <span class='fl'>1</span>,
+  dataWeights <span class='op'>=</span> <span class='cn'>NULL</span>,
+  verbose <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>input input image</p></td>
+      <th>fixedPoints</th>
+      <td><p>fixed points matrix</p></td>
     </tr>
     <tr>
-      <th>mask</th>
-      <td><p>defines the object of interest in the fixedImage</p></td>
+      <th>movingPoints</th>
+      <td><p>moving points matrix</p></td>
     </tr>
     <tr>
-      <th>patchSize</th>
-      <td><p>vector or scalar defining patch dimensions</p></td>
+      <th>transformType</th>
+      <td><p>Affine, Rigid and Similarity currently supported</p></td>
     </tr>
     <tr>
-      <th>featureSubset</th>
-      <td><p>a vector that selects a subset of features</p></td>
+      <th>nToTrim</th>
+      <td><p>the number of points to throw away at each iteration; if this
+is a two-vector then we will sample values between these; can be used to
+accelerate the search with a higher number earlier.</p></td>
     </tr>
     <tr>
-      <th>block_name</th>
-      <td><p>name of vgg feature block, either block2_conv2 or integer.
-use the former for smaller patch sizes.  Or try ripmmarc.</p></td>
+      <th>minProportionPoints</th>
+      <td><p>the minimum proportion of points to return</p></td>
     </tr>
     <tr>
-      <th>vggmodel</th>
-      <td><p>prebuilt feature model</p></td>
+      <th>nCVGroups</th>
+      <td><p>number of cross-validation groups to determine error</p></td>
     </tr>
     <tr>
-      <th>subtractor</th>
-      <td><p>value to subtract when scaling image intensity; should be
-chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.</p></td>
+      <th>lambda</th>
+      <td><p>ridge penalty in zero to one</p></td>
     </tr>
     <tr>
-      <th>patchVarEx</th>
-      <td><p>patch variance explained for ripmmarc</p></td>
+      <th>domainImage</th>
+      <td><p>image defining the domain for deformation maps.</p></td>
     </tr>
     <tr>
-      <th>meanCenter</th>
-      <td><p>boolean mean center the patch for ripmmarc</p></td>
+      <th>numberOfFittingLevels</th>
+      <td><p>integer specifying the number of fitting levels.</p></td>
+    </tr>
+    <tr>
+      <th>meshSize</th>
+      <td><p>vector defining the mesh size at the initial fitting level.</p></td>
+    </tr>
+    <tr>
+      <th>dataWeights</th>
+      <td><p>vector defining the individual weighting of the corresponding
+scattered data value.  Default = NULL meaning all values are weighted the same.</p></td>
+    </tr>
+    <tr>
+      <th>verbose</th>
+      <td><p>boolean</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>feature array, patches and patch coordinates</p>
-    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+    <p>output list contains best fitted model, inliers, outliers</p>
 
-    <p>Avants BB</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'>
-<span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>ANTsR</span><span class='op'>)</span>
-<span class='va'>img</span> <span class='op'>&lt;-</span> <span class='fu'>ri</span><span class='op'>(</span> <span class='fl'>1</span> <span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>iMath</span><span class='op'>(</span> <span class='st'>"Normalize"</span> <span class='op'>)</span>
-<span class='va'>mask</span> <span class='op'>=</span> <span class='fu'>randomMask</span><span class='op'>(</span> <span class='fu'>getMask</span><span class='op'>(</span> <span class='va'>img</span> <span class='op'>)</span>, <span class='fl'>20</span> <span class='op'>)</span>
-<span class='va'>features</span> <span class='op'>=</span> <span class='fu'>deepFeatures</span><span class='op'>(</span> <span class='va'>img</span>, <span class='va'>mask</span>, patchSize <span class='op'>=</span> <span class='fl'>32</span> <span class='op'>)</span>
-
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -8,21 +8,29 @@
 
 <title>Function reference • patchMatchR</title>
 
+
 <!-- jquery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
+
+<!-- bootstrap-toc -->
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script>
 
-<!-- sticky kit -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+<!-- headroom.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -30,7 +38,9 @@
 
 
 
+
 <meta property="og:title" content="Function reference" />
+
 
 
 
@@ -44,9 +54,10 @@
 <![endif]-->
 
 
+
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target="#toc">
     <div class="container template-reference-index">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -68,7 +79,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -79,7 +90,6 @@
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
-      
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
@@ -89,6 +99,7 @@
 </div><!--/.navbar -->
 
       
+
       </header>
 
 <div class="row">
@@ -112,6 +123,11 @@
           <p class="section-desc"></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -133,15 +149,39 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="RANSACAlt.html">RANSACAlt()</a></code> </p>
+        </td>
+        <td><p>Alternative random sample consensus (\)</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="SSIM.html">SSIM()</a></code> </p>
         </td>
         <td><p>Structural similarity index (SSI) between two images.</p></td>
       </tr><tr>
         
         <td>
+          <p><code><a href="convertPatchCoordsToSpatialPoints.html">convertPatchCoordsToSpatialPoints()</a></code> </p>
+        </td>
+        <td><p>convert coordinates of deep feature patches to image-based physical coordinates</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="coordinateImages.html">coordinateImages()</a></code> </p>
+        </td>
+        <td><p>make a coordinate image</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="deepFeatures.html">deepFeatures()</a></code> </p>
         </td>
         <td><p>extract deep features from 2D or 3D image</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="deepLandmarkRegressionWithHeatmaps.html">deepLandmarkRegressionWithHeatmaps()</a></code> </p>
+        </td>
+        <td><p>Deep heatmap-based landmark regression stage</p></td>
       </tr><tr>
         
         <td>
@@ -153,13 +193,31 @@
         <td>
           <p><code><a href="deepPatchMatch.html">deepPatchMatch()</a></code> </p>
         </td>
-        <td><p>patch match two images with deep features</p></td>
+        <td><p>deepPatchMatch patch match two images with deep features</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="deepPatchMatchMultiStart.html">deepPatchMatchMultiStart()</a></code> </p>
+        </td>
+        <td><p>deepPatchMatch with multiple starting points</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="featureDistanceMap.html">featureDistanceMap()</a></code> </p>
+        </td>
+        <td><p>Feature distance map</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="fitTransformToPairedPoints.html">fitTransformToPairedPoints()</a></code> </p>
         </td>
         <td><p>Fit transform to points</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="fitTransformToPairedPointsTF.html">fitTransformToPairedPointsTF()</a></code> </p>
+        </td>
+        <td><p>Fit transform to points with tensorflow</p></td>
       </tr><tr>
         
         <td>
@@ -183,19 +241,37 @@
         <td>
           <p><code><a href="patchMatchR-package.html">patchMatchR-package</a></code> </p>
         </td>
-        <td><p>Local patch matching with flexible transformation models in n-dimensional images.</p></td>
+        <td><p>Local patch matching with flexible transformation models in n-dimensional images</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="polarDecomposition.html">polarDecomposition()</a></code> </p>
+        </td>
+        <td><p>polar decomposition with reflection control</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="randomANTsTransformation.html">randomANTsTransformation()</a></code> </p>
+        </td>
+        <td><p>random transformation matrix</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="randomAffineImage.html">randomAffineImage()</a></code> </p>
+        </td>
+        <td><p>transform an image by a random matrix</p></td>
       </tr>
     </tbody>
     </table>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-all-functions">All functions</a></li>
-    </ul>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
+
 
       <footer>
       <div class="copyright">
@@ -203,13 +279,16 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
+
       </footer>
    </div>
 
   
 
+
   </body>
 </html>
+
 

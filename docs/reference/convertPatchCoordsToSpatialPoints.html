@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>extract deep features from 2D or 3D image — deepFeatures • patchMatchR</title>
+<title>convert coordinates of deep feature patches to image-based physical coordinates — convertPatchCoordsToSpatialPoints • patchMatchR</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="extract deep features from 2D or 3D image — deepFeatures" />
-<meta property="og:description" content="High-level function for extracting features based on a pretrained network." />
+<meta property="og:title" content="convert coordinates of deep feature patches to image-based physical coordinates — convertPatchCoordsToSpatialPoints" />
+<meta property="og:description" content="High-level function for handling the converion between voxel and corner-based
+indices of patches to center and physical-based landmark coordinates." />
 
 
 
@@ -106,73 +107,38 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>extract deep features from 2D or 3D image</h1>
+    <h1>convert coordinates of deep feature patches to image-based physical coordinates</h1>
     
-    <div class="hidden name"><code>deepFeatures.Rd</code></div>
+    <div class="hidden name"><code>convertPatchCoordsToSpatialPoints.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>High-level function for extracting features based on a pretrained network.</p>
+    <p>High-level function for handling the converion between voxel and corner-based
+indices of patches to center and physical-based landmark coordinates.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>deepFeatures</span><span class='op'>(</span>
-  <span class='va'>x</span>,
-  <span class='va'>mask</span>,
-  patchSize <span class='op'>=</span> <span class='fl'>64</span>,
-  <span class='va'>featureSubset</span>,
-  block_name <span class='op'>=</span> <span class='st'>"block2_conv2"</span>,
-  <span class='va'>vggmodel</span>,
-  subtractor <span class='op'>=</span> <span class='fl'>127.5</span>,
-  patchVarEx <span class='op'>=</span> <span class='fl'>0.95</span>,
-  meanCenter <span class='op'>=</span> <span class='cn'>FALSE</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>convertPatchCoordsToSpatialPoints</span><span class='op'>(</span><span class='va'>patchCoords</span>, <span class='va'>img</span>, patchSize <span class='op'>=</span> <span class='fl'>32</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>input input image</p></td>
+      <th>patchCoords</th>
+      <td><p>input patch coordinates (usually from <code>deepFeatures</code>)</p></td>
     </tr>
     <tr>
-      <th>mask</th>
-      <td><p>defines the object of interest in the fixedImage</p></td>
+      <th>img</th>
+      <td><p>reference image defining spatial domain</p></td>
     </tr>
     <tr>
       <th>patchSize</th>
       <td><p>vector or scalar defining patch dimensions</p></td>
     </tr>
-    <tr>
-      <th>featureSubset</th>
-      <td><p>a vector that selects a subset of features</p></td>
-    </tr>
-    <tr>
-      <th>block_name</th>
-      <td><p>name of vgg feature block, either block2_conv2 or integer.
-use the former for smaller patch sizes.  Or try ripmmarc.</p></td>
-    </tr>
-    <tr>
-      <th>vggmodel</th>
-      <td><p>prebuilt feature model</p></td>
-    </tr>
-    <tr>
-      <th>subtractor</th>
-      <td><p>value to subtract when scaling image intensity; should be
-chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.</p></td>
-    </tr>
-    <tr>
-      <th>patchVarEx</th>
-      <td><p>patch variance explained for ripmmarc</p></td>
-    </tr>
-    <tr>
-      <th>meanCenter</th>
-      <td><p>boolean mean center the patch for ripmmarc</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>feature array, patches and patch coordinates</p>
+    <p>spatial patch coordinates</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Avants BB</p>
@@ -182,7 +148,8 @@ chosen to match training paradigm eg 127.5 for vgg and 0.5 for resnet like.</p><
 <span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'>ANTsR</span><span class='op'>)</span>
 <span class='va'>img</span> <span class='op'>&lt;-</span> <span class='fu'>ri</span><span class='op'>(</span> <span class='fl'>1</span> <span class='op'>)</span> <span class='op'>%&gt;%</span> <span class='fu'>iMath</span><span class='op'>(</span> <span class='st'>"Normalize"</span> <span class='op'>)</span>
 <span class='va'>mask</span> <span class='op'>=</span> <span class='fu'>randomMask</span><span class='op'>(</span> <span class='fu'>getMask</span><span class='op'>(</span> <span class='va'>img</span> <span class='op'>)</span>, <span class='fl'>20</span> <span class='op'>)</span>
-<span class='va'>features</span> <span class='op'>=</span> <span class='fu'>deepFeatures</span><span class='op'>(</span> <span class='va'>img</span>, <span class='va'>mask</span>, patchSize <span class='op'>=</span> <span class='fl'>32</span> <span class='op'>)</span>
+<span class='va'>features</span> <span class='op'>=</span> <span class='fu'><a href='deepFeatures.html'>deepFeatures</a></span><span class='op'>(</span> <span class='va'>img</span>, <span class='va'>mask</span>, patchSize <span class='op'>=</span> <span class='fl'>32</span> <span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Loaded Tensorflow version 2.6.0</span></div><div class='input'><span class='va'>coords</span> <span class='op'>=</span> <span class='fu'>convertPatchCoordsToSpatialPoints</span><span class='op'>(</span> <span class='va'>features</span><span class='op'>$</span><span class='va'>patchCoords</span>, <span class='va'>img</span> <span class='op'>)</span>
 
 </div></pre>
   </div>
