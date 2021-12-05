@@ -3,9 +3,9 @@ version: 2
 
 steps: &steps
   steps:
-#    - restore_cache:
-#        keys:
-#          - cache-{{ .Environment.CIRCLE_JOB }}
+    - restore_cache:
+        keys:
+          - cache-{{ .Environment.CIRCLE_JOB }}
     - checkout
 #    - run:
 #        name: Install package dependencies env
