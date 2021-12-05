@@ -182,6 +182,7 @@ randomAffineImage <- function(
 #' @importFrom ANTsR fitBsplineDisplacementField
 #' @importFrom magrittr %>%
 #' @importFrom tensorflow tf
+#' @importFrom MASS ginv
 patchMatch <- function(
   movingImage,
   fixedImage,

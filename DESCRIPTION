@@ -22,7 +22,9 @@ Imports:
     keras,
     knitr,
     magrittr,
-    qlcMatrix
+    qlcMatrix,
+    MASS,
+    tensorflow
 Suggests:
     ggplot2,
     rmarkdown,

@@ -21,7 +21,7 @@ steps: &steps
 #        command: Rscript -e "source('https://neuroconductor.org/neurocLite.R'); neuro_install(c('ITKR', 'ANTsRCore','ANTsR'))"
     - run:
         name: Install package dependencies manually
-        command: Rscript -e "install.packages(c('Hmisc', 'tfdatasets'))"
+        command: Rscript -e "install.packages(c('Hmisc', 'tfdatasets', 'MASS'))"
     - run:
         name: Install tf
         command: Rscript -e "reticulate::install_miniconda();tensorflow::install_tensorflow()"
