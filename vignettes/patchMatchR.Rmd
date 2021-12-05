@@ -1,4 +1,4 @@
-matchO$---
+---
 title: "*patchMatchR*: Patch-based matching and features for images in R"
 author: "Brian B. Avants"
 date: "`r Sys.Date()`"
@@ -142,7 +142,7 @@ Now match the images.
 ```{r,message=FALSE,warning=FALSE}
 imgmask = randomMask( getMask( img ), 100 ) # may need more points than this
 mtch = patchMatch( imgc, img, imgmask, fixedPatchRadius = 7  )
-myMatches = matchedPatches( imgc, img, mtch, fixedPatchRadius = 7, verbose=FALSE )
+myMatches = matchedPatches( imgc, img, mtch, fixedPatchRadius = 7 )
 k = which.min( mtch$MI ) # mutual information
 layout( matrix(1:2,nrow=1))
 plot( myMatches$fixPatchList[[k]], colorbar=F, doCropping=F )
@@ -162,7 +162,7 @@ rrr <- RANSAC(
   data.matrix(mtch[,c(7,8)]), transformType = 'Rigid',
   minNtoFit = 8, maxIterations = 10000,
   errorThreshold = 0.5, goodProportion = 0.05,
-  lambda = 1e-4, verbose = FALSE )
+  lambda = 1e-4 )
 
 imgtx = applyAntsrTransformToImage(  rrr$bestModel$transform, imgc, img )
 antsImageMutualInformation( img, imgc )
@@ -200,7 +200,7 @@ mask2 = randomMask( getMask( img2 ), nP2 )
 blk = 21
 blk = "block2_conv2"
 matchO = deepPatchMatch(  img2, img, mask, mask2,
-  movingPatchSize = psz, fixedPatchSize = psz, verbose = FALSE,
+  movingPatchSize = psz, fixedPatchSize = psz,
   block_name = blk ) # , knnSpatial = 32
 mlm = matchedLandmarks( matchO, img, img2, rep(psz,img@dimension) )
 wsel = which( !is.na( matchO$matches ) )
@@ -217,7 +217,7 @@ now follow up with a RANSAC
 result <- RANSAC( mlm$fixedPoints, mlm$movingPoints, transformType = 'Rigid',
   minNtoFit = 8, maxIterations = 10000,
   errorThreshold = 0.5, goodProportion = 0.05,
-  lambda = 1e-4, verbose = FALSE )
+  lambda = 1e-4)
 # visualize
 reg = applyAntsrTransformToImage( result$bestModel$transform, imgc, img )
 layout( matrix(1:2,nrow=1, byrow=T) )
