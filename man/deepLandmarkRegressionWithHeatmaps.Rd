@@ -7,7 +7,8 @@
 deepLandmarkRegressionWithHeatmaps(
   model,
   activation = c("none", "relu", "trelu", "softmax", "sigmoid"),
-  theta
+  theta,
+  useMask = FALSE
 )
 }
 \arguments{
@@ -18,6 +19,9 @@ should match the number of landmarks and should be an image.}
 \item{activation}{the activation function for the regression maps}
 
 \item{theta}{the theta parameter for thresholded relu}
+
+\item{useMask}{boolean adds a 2nd input for a mask that gets applied to the
+output activations.}
 }
 \value{
 the augmented model

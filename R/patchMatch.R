@@ -1652,14 +1652,18 @@ featureDistanceMap <- function( image1, image2, jointMask, patchSize=32, ... ) {
 #' should match the number of landmarks and should be an image.
 #' @param activation the activation function for the regression maps
 #' @param theta the theta parameter for thresholded relu
+#' @param useMask boolean adds a 2nd input for a mask that gets applied to the
+#' output activations.
 #' @return the augmented model
 #'
 #' @export
 deepLandmarkRegressionWithHeatmaps <- function(
   model,
   activation = c("none","relu","trelu","softmax",'sigmoid'),
-  theta ) {
+  theta,
+  useMask=FALSE ) {
   multiInput = FALSE
+  inputDimList = list( NULL, NULL, NULL )
   if ( length( model$inputs ) == 1 ) {
     theshaper = length( model$input_shape )
   }
@@ -1667,31 +1671,52 @@ deepLandmarkRegressionWithHeatmaps <- function(
     theshaper = length( model$input_shape[[1]] )
     multiInput = TRUE
   }
+  targetDimensionality = as.integer( 2 )
   if ( theshaper == 5 ) {
     targetDimensionality = as.integer( 3 )
-    mycc <- layer_input(  list( NULL, NULL, NULL, targetDimensionality ) )
+    inputDimList = lappend( inputDimList, NULL )
   }
-  if ( theshaper == 4 ) {
-    targetDimensionality = as.integer( 2 )
-    mycc <- layer_input(  list( NULL, NULL, targetDimensionality ) )
-  }
+  inputDimListCC = lappend( inputDimList, targetDimensionality )
+  inputDimListMask = lappend( inputDimList, 1 )
+  mycc <- layer_input(  inputDimListCC  )
   nPoints = tail( unlist( model$output_shape ), 1 )
   # perform soft thresholding to get positive component of unet output
-  if ( activation == 'none' ) {
-    unet_output = model$outputs[[1]]
-  } else if ( activation == 'softmax') {
-    unet_output = model$outputs[[1]] %>%
-      layer_activation_softmax()
-  } else if ( activation == 'sigmoid') {
-    unet_output = model$outputs[[1]] %>%
-      tf$nn$sigmoid()
-  } else {
-    if ( is.na( theta ) )
+  if ( useMask == FALSE ) {
+    if ( activation == 'none' ) {
+      unet_output = model$outputs[[1]]
+    } else if ( activation == 'softmax') {
       unet_output = model$outputs[[1]] %>%
-        layer_activation_relu()
-    if ( ! is.na( theta ) )
+        layer_activation_softmax()
+    } else if ( activation == 'sigmoid') {
       unet_output = model$outputs[[1]] %>%
-        layer_activation_thresholded_relu( theta = theta )
+        tf$nn$sigmoid()
+    } else {
+      if ( is.na( theta ) )
+        unet_output = model$outputs[[1]] %>%
+          layer_activation_relu()
+      if ( ! is.na( theta ) )
+        unet_output = model$outputs[[1]] %>%
+          layer_activation_thresholded_relu( theta = theta )
+      }
+    } else {
+      maskinput <- layer_input(  inputDimListMask )
+      if ( activation == 'none' ) {
+        unet_output = layer_multiply( list( model$outputs[[1]], maskinput ) )
+      } else if ( activation == 'softmax') {
+        unet_output = layer_multiply( list(
+          model$outputs[[1]] %>% layer_activation_softmax(), maskinput ) )
+      } else if ( activation == 'sigmoid') {
+        unet_output = layer_multiply( list(
+          model$outputs[[1]] %>% tf$nn$sigmoid(), maskinput ) )
+      } else {
+        if ( is.na( theta ) )
+          unet_output = layer_multiply( list(
+            model$outputs[[1]] %>% layer_activation_relu(), maskinput ) )
+        if ( ! is.na( theta ) )
+          unet_output =
+            layer_multiply( list( model$outputs[[1]] %>%
+              layer_activation_thresholded_relu( theta = theta ), maskinput ) )
+        }
     }
   weightedRegressionList = tf$split( unet_output, as.integer(nPoints),
     axis=as.integer(targetDimensionality+1) )
@@ -1710,16 +1735,31 @@ deepLandmarkRegressionWithHeatmaps <- function(
     }
   catout = layer_concatenate( regPoints, axis=1L ) %>%
     layer_reshape( c( nPoints , targetDimensionality ))
-  if ( ! multiInput )
+  if ( ! multiInput & !useMask )
     return(
       keras_model(
         list( model$inputs[[1]], mycc), list( unet_output, catout  ) )
       )
-  if ( multiInput )
+  if ( multiInput & !useMask  )
     return(
       keras_model(
         lappend( model$inputs, mycc ), list( unet_output, catout  ) )
       )
+
+  if ( ! multiInput & useMask )
+    return(
+      keras_model(
+        list( model$inputs[[1]], mycc, maskinput ), list( unet_output, catout  ) )
+      )
+  if ( multiInput & useMask  ) {
+    myinp = model$inputs
+    myinp = lappend( myinp, mycc )
+    myinp = lappend( myinp, maskinput )
+    return(
+      keras_model( myinp, list( unet_output, catout  ) )
+      )
+    }
+
 }
 
 
