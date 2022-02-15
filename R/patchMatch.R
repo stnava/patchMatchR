@@ -1485,7 +1485,7 @@ RANSACAlt <- function(
     myFP = myFP[inliers,]
     myMP = myMP[inliers,]
     nMax = nrow( myFP )
-    if ( nCVGroups > 0 ) useCV = TRUE
+    if ( nCVGroups > 0 ) useCV = TRUE  else useCV=FALSE
     if ( useCV & ! is.null( nMax ) ) {
       cvgroups = sample(c(1:nCVGroups),nrow( myFP ),replace=T)
       cvErr = rep( 0, nCVGroups )

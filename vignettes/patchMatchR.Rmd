@@ -157,14 +157,13 @@ parameter search that is internal to the method*
 # RANSAC(fixedPoints, movingPoints, transformType = "Affine",
 #  minNtoFit = 16, maxIterations = 20, errorThreshold = 1,
 #  goodProportion = 0.5, lambda = 1e-04, verbose = FALSE)
-rrr <- RANSAC(
+rrr <- RANSACAlt(
   data.matrix(mtch[,c(3,4)]),
   data.matrix(mtch[,c(7,8)]), transformType = 'Rigid',
-  minNtoFit = 8, maxIterations = 10000,
-  errorThreshold = 0.5, goodProportion = 0.05,
-  lambda = 1e-4 )
+  nToTrim = 1, minProportionPoints = 0.11, nCVGroups=4 )
 
-imgtx = applyAntsrTransformToImage(  rrr$bestModel$transform, imgc, img )
+
+imgtx = applyAntsrTransformToImage(  rrr$finalModel$transform, imgc, img )
 antsImageMutualInformation( img, imgc )
 antsImageMutualInformation( img, imgtx )
 layout( matrix(1:2,nrow=1))
@@ -215,12 +214,10 @@ plot( as.antsImage( matchO$mfeatures$patches[sss,,] ) , colorbar=F, doCropping=F
 now follow up with a RANSAC
 
 ```{r,message=FALSE,warning=FALSE}
-result <- RANSAC( mlm$fixedPoints, mlm$movingPoints, transformType = 'Rigid',
-  minNtoFit = 8, maxIterations = 10000,
-  errorThreshold = 0.5, goodProportion = 0.05,
-  lambda = 1e-4)
+result <- RANSACAlt( mlm$fixedPoints, mlm$movingPoints, transformType = 'Rigid',
+  nToTrim = 1, minProportionPoints = 0.11, nCVGroups=4 )
 # visualize
-reg = applyAntsrTransformToImage( result$bestModel$transform, imgc, img )
+reg = applyAntsrTransformToImage( result$finalModel$transform, imgc, img )
 layout( matrix(1:2,nrow=1, byrow=T) )
 plot( img, colorbar = F  )
 plot( reg, colorbar = F   )
