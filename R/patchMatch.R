@@ -1450,6 +1450,12 @@ RANSACAlt <- function(
   idim = ncol( myFP )
   if ( minn < (idim*2 + min(nToTrim) ) ) minn = idim*2 + min(nToTrim)*2
   its = 0
+
+  bestFP = NULL
+  bestMP = NULL
+  bestRejectFixedPoints = NULL
+  bestRejectMovingPoints = NULL
+  isBest = TRUE
   rejectFixedPoints = NULL
   rejectMovingPoints = NULL
   bestErr = Inf
